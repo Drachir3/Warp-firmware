@@ -13,6 +13,7 @@
 #include "warp.h"
 #include "devSSD1331.h"
 
+
 volatile uint8_t	inBuffer[1];
 volatile uint8_t	payloadBytes[1];
 
@@ -22,9 +23,9 @@ volatile uint8_t	payloadBytes[1];
  */
 enum
 {
-	kSSD1331PinMOSI		= GPIO_MAKE_PIN(HW_GPIOA, 8),
+	kSSD1331PinMOSI	= GPIO_MAKE_PIN(HW_GPIOA, 8),
 	kSSD1331PinSCK		= GPIO_MAKE_PIN(HW_GPIOA, 9),
-	kSSD1331PinCSn		= GPIO_MAKE_PIN(HW_GPIOB, 13),
+	kSSD1331PinCSn		= GPIO_MAKE_PIN(HW_GPIOB, 11),
 	kSSD1331PinDC		= GPIO_MAKE_PIN(HW_GPIOA, 12),
 	kSSD1331PinRST		= GPIO_MAKE_PIN(HW_GPIOB, 0),
 };
@@ -77,7 +78,7 @@ devSSD1331init(void)
 	PORT_HAL_SetMuxMode(PORTA_BASE, 8u, kPortMuxAlt3);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 9u, kPortMuxAlt3);
 
-	enableSPIpins();
+	warpEnableSPIpins();
 
 	/*
 	 *	Override Warp firmware's use of these pins.
@@ -131,13 +132,13 @@ devSSD1331init(void)
 	writeCommand(kSSD1331CommandVCOMH);		// 0xBE
 	writeCommand(0x3E);
 	writeCommand(kSSD1331CommandMASTERCURRENT);	// 0x87
-	writeCommand(0x06);
+	writeCommand(0x0F);
 	writeCommand(kSSD1331CommandCONTRASTA);		// 0x81
-	writeCommand(0x91);
+	writeCommand(0xFF);
 	writeCommand(kSSD1331CommandCONTRASTB);		// 0x82
-	writeCommand(0x50);
+	writeCommand(0xFF);
 	writeCommand(kSSD1331CommandCONTRASTC);		// 0x83
-	writeCommand(0x7D);
+	writeCommand(0xFF);
 	writeCommand(kSSD1331CommandDISPLAYON);		// Turn on oled panel
 
 	/*
@@ -145,7 +146,7 @@ devSSD1331init(void)
 	 */
 	writeCommand(kSSD1331CommandFILL);
 	writeCommand(0x01);
-
+	
 	/*
 	 *	Clear Screen
 	 */
@@ -160,9 +161,20 @@ devSSD1331init(void)
 	/*
 	 *	Any post-initialization drawing commands go here.
 	 */
-	//...
 
-
+	writeCommand(kSSD1331CommandDRAWRECT); // Draw Rectangle
+	writeCommand(0x00);	// Start column
+	writeCommand(0x00);	// Start row
+	writeCommand(95);	// End column	
+	writeCommand(63);	// End row
+	writeCommand(0x00);	// C border colour
+	writeCommand(0xFF);	// B border colour
+	writeCommand(0x00);	// A border colour
+	writeCommand(0x00);	// C fill colour
+	writeCommand(0xFF);	// B fill colour
+	writeCommand(0x00);	// A fill colour
+	
+	
 
 	return 0;
 }
