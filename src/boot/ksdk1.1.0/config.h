@@ -59,7 +59,6 @@
  */
 #if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 	#define		WARP_BUILD_ENABLE_DEVADXL362		0
-	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
 	#define		WARP_BUILD_ENABLE_DEVAS7262		0
 	#define		WARP_BUILD_ENABLE_DEVAS7263		0
 	#define		WARP_BUILD_ENABLE_DEVBGX		0
@@ -81,7 +80,6 @@
 	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
 #elif (WARP_BUILD_ENABLE_FRDMKL03)
 	#define		WARP_BUILD_ENABLE_DEVADXL362		0
-	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
 	#define		WARP_BUILD_ENABLE_DEVAS7262		0
 	#define		WARP_BUILD_ENABLE_DEVAS7263		0
 	#define		WARP_BUILD_ENABLE_DEVBGX		0
@@ -107,7 +105,6 @@
 	 *	Otherwise: Edit these to set which code paths are activated in the firmware compilation
 	 */
 	#define		WARP_BUILD_ENABLE_DEVADXL362		1
-	#define		WARP_BUILD_ENABLE_DEVAMG8834		0
 	#define		WARP_BUILD_ENABLE_DEVAS7262		0
 	#define		WARP_BUILD_ENABLE_DEVAS7263		0
 	#define		WARP_BUILD_ENABLE_DEVBGX		1
@@ -177,7 +174,6 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsTCS34725		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI4705		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsCCS811		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAMG8834		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAS7262		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAS7263		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
