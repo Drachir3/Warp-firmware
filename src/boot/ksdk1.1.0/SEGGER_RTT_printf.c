@@ -60,6 +60,8 @@ Revision: $Rev: 12489 $
 #include "SEGGER_RTT.h"
 #include "SEGGER_RTT_Conf.h"
 
+#include <strings.h> // Added to sort out error with implicit declaration of bzero
+
 /*********************************************************************
 *
 *       Defines, configurable
