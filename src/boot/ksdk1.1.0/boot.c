@@ -83,13 +83,6 @@
 	volatile WarpSPIDeviceState			deviceAT45DBState;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVBMX055)
-	#include "devBMX055.h"
-	volatile WarpI2CDeviceState			deviceBMX055accelState;
-	volatile WarpI2CDeviceState			deviceBMX055gyroState;
-	volatile WarpI2CDeviceState			deviceBMX055magState;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 	#include "devMMA8451Q.h"
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
@@ -1217,8 +1210,8 @@ int
 main(void)
 {
 	WarpStatus				status;
-	uint8_t					key;
-	WarpSensorDevice			menuTargetSensor		= kWarpSensorBMX055accel;
+	uint8_t				key;
+	WarpSensorDevice			menuTargetSensor		= kWarpSensorMMA8451Q;
 	volatile WarpI2CDeviceState *		menuI2cDevice			= NULL;
 	uint8_t					menuRegisterAddress		= 0x00;
 	rtc_datetime_t				warpBootDate;
@@ -1433,11 +1426,6 @@ main(void)
 	/*
 	 *	Initialize all the sensors
 	 */
-	#if (WARP_BUILD_ENABLE_DEVBMX055)
-		initBMX055accel(0x18	/* i2cAddress */,	&deviceBMX055accelState,	kWarpDefaultSupplyVoltageMillivoltsBMX055accel	);
-		initBMX055gyro(	0x68	/* i2cAddress */,	&deviceBMX055gyroState,		kWarpDefaultSupplyVoltageMillivoltsBMX055gyro	);
-		initBMX055mag(	0x10	/* i2cAddress */,	&deviceBMX055magState,		kWarpDefaultSupplyVoltageMillivoltsBMX055mag	);
-	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 //		initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
@@ -1839,16 +1827,6 @@ main(void)
 				warpPrint("\r\tSelect:\n");
 
 
-				#if (WARP_BUILD_ENABLE_DEVBMX055)
-					warpPrint("\r\t- '2' BMX055accel		(0x00--0x3F): 2.4V -- 3.6V\n");
-					warpPrint("\r\t- '3' BMX055gyro		(0x00--0x3F): 2.4V -- 3.6V\n");
-					warpPrint("\r\t- '4' BMX055mag			(0x40--0x52): 2.4V -- 3.6V\n");
-				#else
-					warpPrint("\r\t- '2' BMX055accel 		(0x00--0x3F): 2.4V -- 3.6V (compiled out) \n");
-					warpPrint("\r\t- '3' BMX055gyro			(0x00--0x3F): 2.4V -- 3.6V (compiled out) \n");
-					warpPrint("\r\t- '4' BMX055mag			(0x40--0x52): 2.4V -- 3.6V (compiled out) \n");
-				#endif
-
 				#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 					warpPrint("\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
 				#else
@@ -1909,32 +1887,6 @@ main(void)
 				switch(key)
 				{
 
-					#if (WARP_BUILD_ENABLE_DEVBMX055)
-						case '2':
-						{
-							menuTargetSensor = kWarpSensorBMX055accel;
-							menuI2cDevice = &deviceBMX055accelState;
-							break;
-						}
-					#endif
-
-					#if (WARP_BUILD_ENABLE_DEVBMX055)
-						case '3':
-						{
-							menuTargetSensor = kWarpSensorBMX055gyro;
-							menuI2cDevice = &deviceBMX055gyroState;
-							break;
-						}
-					#endif
-
-					#if (WARP_BUILD_ENABLE_DEVBMX055)
-						case '4':
-						{
-							menuTargetSensor = kWarpSensorBMX055mag;
-							menuI2cDevice = &deviceBMX055magState;
-							break;
-						}
-					#endif
 
 					#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 						case '5':
@@ -2499,19 +2451,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	numberOfConfigErrors += configureSensorCCS811(payloadCCS811,
 					);
 	#endif
-	#if (WARP_BUILD_ENABLE_DEVBMX055)
-	numberOfConfigErrors += configureSensorBMX055accel(0b00000011,/* Payload:+-2g range */
-					0b10000000,/* Payload:unfiltered data, shadowing enabled */
-					);
-	numberOfConfigErrors += configureSensorBMX055mag(0b00000001,/* Payload:from suspend mode to sleep mode*/
-					0b00000001,/* Default 10Hz data rate, forced mode*/
-					);
-	numberOfConfigErrors += configureSensorBMX055gyro(0b00000100,/* +- 125degrees/s */
-					0b00000000,/* ODR 2000 Hz, unfiltered */
-					0b00000000,/* normal mode */
-					0b10000000,/* unfiltered data, shadowing enabled */
-					);
-	#endif
 
 	if (printHeadersAndCalibration)
 	{
@@ -2531,12 +2470,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 		#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 			warpPrint(" L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
-		#endif
-		
-		#if (WARP_BUILD_ENABLE_DEVBMX055)
-			warpPrint(" BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
-			warpPrint(" BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
-			warpPrint(" BMX055gyro x, BMX055gyro y, BMX055gyro z,");
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVCCS811)
@@ -2566,12 +2499,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 		#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 			printSensorDataL3GD20H(hexModeFlag);
-		#endif
-
-		#if (WARP_BUILD_ENABLE_DEVBMX055)
-			printSensorDataBMX055accel(hexModeFlag);
-			printSensorDataBMX055mag(hexModeFlag);
-			printSensorDataBMX055gyro(hexModeFlag);
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVCCS811)
@@ -2791,93 +2718,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 						);
 			#else
 				warpPrint("\r\n\tINA219 Read Aborted. Device Disabled :(");
-			#endif
-
-			break;
-		}
-
-		case kWarpSensorBMX055accel:
-		{
-			/*
-			 *	BMX055accel: VDD 2.4V -- 3.6V
-			 */
-			#if (WARP_BUILD_ENABLE_DEVBMX055)
-				loopForSensor(	"\r\nBMX055accel:\n\r",		/*	tagString			*/
-						&readSensorRegisterBMX055accel,	/*	readSensorRegisterFunction	*/
-						&deviceBMX055accelState,	/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0x39,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tBMX055accel Read Aborted. Device Disabled :( ");
-			#endif
-
-			break;
-		}
-
-		case kWarpSensorBMX055gyro:
-		{
-			/*
-			 *	BMX055gyro: VDD 2.4V -- 3.6V
-			 */
-			#if (WARP_BUILD_ENABLE_DEVBMX055)
-				loopForSensor(	"\r\nBMX055gyro:\n\r",		/*	tagString			*/
-						&readSensorRegisterBMX055gyro,	/*	readSensorRegisterFunction	*/
-						&deviceBMX055gyroState,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0x39,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tBMX055gyro Read Aborted. Device Disabled :( ");
-			#endif
-
-			break;
-		}
-
-		case kWarpSensorBMX055mag:
-		{
-			/*
-			 *	BMX055mag: VDD 2.4V -- 3.6V
-			 */
-			#if WARP_BUILD_ENABLE_DEVBMX055
-				loopForSensor(	"\r\nBMX055mag:\n\r",		/*	tagString			*/
-						&readSensorRegisterBMX055mag,	/*	readSensorRegisterFunction	*/
-						&deviceBMX055magState,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x40,				/*	minAddress			*/
-						0x52,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\t BMX055mag Read Aborted. Device Disabled :( ");
 			#endif
 
 			break;
@@ -3200,24 +3040,7 @@ writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength)
 void
 powerupAllSensors(void)
 {
-	/*
-	 *	BMX055mag
-	 *
-	 *	Write '1' to power control bit of register 0x4B. See page 134.
-	 */
-	#if (WARP_BUILD_ENABLE_DEVBMX055)
-		WarpStatus	status = writeByteToI2cDeviceRegister(	deviceBMX055magState.i2cAddress		/*	i2cAddress		*/,
-							true					/*	sendCommandByte		*/,
-							0x4B					/*	commandByte		*/,
-							true					/*	sendPayloadByte		*/,
-							(1 << 0)				/*	payloadByte		*/);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("\r\tPowerup command failed, code=%d, for BMX055mag @ 0x%02x.\n", status, deviceBMX055magState.i2cAddress);
-		}
-	#else
-		warpPrint("\r\tPowerup command failed. BMX055 disabled \n");
-	#endif
+
 }
 
 
@@ -3235,52 +3058,6 @@ activateAllLowPowerSensorModes(bool verbose)
 		//TODO: move 0xB9 into a named constant
 		//spiTransactionIS25xP({0xB9 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 1 /* opCount */);
 	#endif
-
-	/*
-	 *	BMX055accel: At POR, device is in Normal mode. Move it to Deep Suspend mode.
-	 *
-	 *	Write '1' to deep suspend bit of register 0x11, and write '0' to suspend bit of register 0x11. See page 23.
-	 */
-	#if WARP_BUILD_ENABLE_DEVBMX055
-		WarpStatus	status = writeByteToI2cDeviceRegister(	deviceBMX055accelState.i2cAddress	/*	i2cAddress		*/,
-							true					/*	sendCommandByte		*/,
-							0x11					/*	commandByte		*/,
-							true					/*	sendPayloadByte		*/,
-							(1 << 5)				/*	payloadByte		*/);
-		if ((status != kWarpStatusOK) && verbose)
-		{
-			warpPrint("\r\tPowerdown command failed, code=%d, for BMX055accel @ 0x%02x.\n", status, deviceBMX055accelState.i2cAddress);
-		}
-	#else
-		warpPrint("\r\tPowerdown command abandoned. BMX055 disabled\n");
-	#endif
-
-	/*
-	 *	BMX055gyro: At POR, device is in Normal mode. Move it to Deep Suspend mode.
-	 *
-	 *	Write '1' to deep suspend bit of register 0x11. See page 81.
-	 */
-	#if (WARP_BUILD_ENABLE_DEVBMX055)
-		status = writeByteToI2cDeviceRegister(	deviceBMX055gyroState.i2cAddress	/*	i2cAddress		*/,
-							true					/*	sendCommandByte		*/,
-							0x11					/*	commandByte		*/,
-							true					/*	sendPayloadByte		*/,
-							(1 << 5)				/*	payloadByte		*/);
-		if ((status != kWarpStatusOK) && verbose)
-		{
-			warpPrint("\r\tPowerdown command failed, code=%d, for BMX055gyro @ 0x%02x.\n", status, deviceBMX055gyroState.i2cAddress);
-		}
-	#else
-		warpPrint("\r\tPowerdown command abandoned. BMX055 disabled\n");
-	#endif
-
-
-
-	/*
-	 *	BMX055mag: At POR, device is in Suspend mode. See page 121.
-	 *
-	 *	POR state seems to be powered down.
-	 */
 
 
 

@@ -52,7 +52,6 @@
 
 #if (WARP_BUILD_ENABLE_FRDMKL03)
 	#define		WARP_BUILD_ENABLE_DEVBGX		0
-	#define		WARP_BUILD_ENABLE_DEVBMX055		0
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
 	#define		WARP_BUILD_ENABLE_DEVISL23415		0
@@ -71,7 +70,6 @@
 	 *	Otherwise: Edit these to set which code paths are activated in the firmware compilation
 	 */
 	#define		WARP_BUILD_ENABLE_DEVBGX		1
-	#define		WARP_BUILD_ENABLE_DEVBMX055		0
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
 	#define		WARP_BUILD_ENABLE_DEVISL23415		0
@@ -119,9 +117,6 @@ typedef enum
 	 */
 	kWarpDefaultSupplyVoltageMillivolts			= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsBGX			= 3300,
-	kWarpDefaultSupplyVoltageMillivoltsBMX055accel		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBMX055gyro		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBMX055mag		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsINA219		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsLPS25H		= 1800,
