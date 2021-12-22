@@ -123,11 +123,6 @@
 	volatile WarpI2CDeviceState			deviceSI4705State;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVCCS811)
-	#include "devCCS811.h"
-	olatile WarpI2CDeviceState			deviceCCS811State;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 	#include "devRV8803C7.h"
 	volatile WarpI2CDeviceState			deviceRV8803C7State;
@@ -1460,11 +1455,6 @@ main(void)
 		initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State,		kWarpDefaultSupplyVoltageMillivoltsSI4705	);
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVCCS811)
-		initCCS811(	0x5A	/* i2cAddress */,	&deviceCCS811State,		kWarpDefaultSupplyVoltageMillivoltsCCS811	);
-	#endif
-
-
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
 		initRV8803C7(	0x32	/* i2cAddress */,					kWarpDefaultSupplyVoltageMillivoltsRV8803C7	);
 		status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
@@ -1869,12 +1859,6 @@ main(void)
 					warpPrint("\r\t- 'e' SI4705			(n/a):        2.7V -- 5.5V (compiled out) \n");
 				#endif
 
-				#if (WARP_BUILD_ENABLE_DEVCCS811)
-					warpPrint("\r\t- 'g' CCS811			(0x00--0xFF): 1.8V -- 3.6V\n");
-				#else
-					warpPrint("\r\t- 'g' CCS811			(0x00--0xFF): 1.8V -- 3.6V (compiled out) \n");
-				#endif
-				
 				#if (WARP_BUILD_ENABLE_DEVINA219)
 					warpPrint("\r\t- 'l' INA219			(0x00--0x05): 3.0V -- 5.5V\n");
 				#else
@@ -1946,14 +1930,6 @@ main(void)
 					{
 						menuTargetSensor = kWarpSensorSI4705;
 						menuI2cDevice = &deviceSI4705State;
-						break;
-					}
-#endif
-#if (WARP_BUILD_ENABLE_DEVCCS811)
-					case 'g':
-					{
-						menuTargetSensor = kWarpSensorCCS811;
-						menuI2cDevice = &deviceCCS811State;
 						break;
 					}
 #endif
@@ -2445,12 +2421,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 					0b00000000/* normal mode, disable FIFO, disable high pass filter */
 					);
 	#endif
-	#if (WARP_BUILD_ENABLE_DEVCCS811)
-	uint8_t		payloadCCS811[1];
-	payloadCCS811[0] = 0b01000000;/* Constant power, measurement every 250ms */
-	numberOfConfigErrors += configureSensorCCS811(payloadCCS811,
-					);
-	#endif
 
 	if (printHeadersAndCalibration)
 	{
@@ -2470,10 +2440,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 		#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 			warpPrint(" L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
-		#endif
-
-		#if (WARP_BUILD_ENABLE_DEVCCS811)
-			warpPrint(" CCS811 ECO2, CCS811 TVOC, CCS811 RAW ADC value,");
 		#endif
 
 		warpPrint(" RTC->TSR, RTC->TPR, # Config Errors");
@@ -2499,10 +2465,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 		#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 			printSensorDataL3GD20H(hexModeFlag);
-		#endif
-
-		#if (WARP_BUILD_ENABLE_DEVCCS811)
-			printSensorDataCCS811(hexModeFlag);
 		#endif
 
 
@@ -2892,35 +2854,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 						);
 			#else
 				warpPrint("\r\n\tSI7021 Read Aborted. Device Disabled :( ");
-			#endif
-
-			break;
-		}
-
-		case kWarpSensorCCS811:
-		{
-			/*
-			 *	CCS811: VDD 1.8V -- 3.6V
-			 */
-			#if (WARP_BUILD_ENABLE_DEVCCS811)
-				loopForSensor(	"\r\nCCS811:\n\r",		/*	tagString			*/
-						&readSensorRegisterCCS811,	/*	readSensorRegisterFunction	*/
-						&deviceCCS811State,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0xFF,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tCCS811 Read Aborted. Device Disabled :( ");
 			#endif
 
 			break;

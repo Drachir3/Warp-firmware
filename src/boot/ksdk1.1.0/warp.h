@@ -77,7 +77,6 @@ typedef enum
 	kWarpSensorTCS34725,
 	kWarpSensorSI4705,
 	kWarpSensorSI7021,
-	kWarpSensorCCS811,
 	kWarpSensorPAN1326,
 	kWarpSensorSCD30,
 } WarpSensorDevice;
@@ -97,9 +96,6 @@ typedef enum
 
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG1		= 0x10,
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG2		= 0x11,
-
-	kWarpSensorConfigurationRegisterCCS811MEAS_MODE			= 0x01,
-	kWarpSensorConfigurationRegisterCCS811APP_START			= 0xF4,
 
 	kWarpSensorConfigurationRegisterL3GD20HCTRL1			= 0x20,
 	kWarpSensorConfigurationRegisterL3GD20HCTRL2			= 0x21,
@@ -138,10 +134,6 @@ typedef enum
 	kWarpSensorOutputRegisterMAG3110OUT_Z_LSB			= 0x06,
 	kWarpSensorOutputRegisterMAG3110DIE_TEMP			= 0x0F,
 
-
-	kWarpSensorOutputRegisterCCS811ALG_DATA				= 0x02,
-	kWarpSensorOutputRegisterCCS811RAW_DATA				= 0x03,
-	kWarpSensorOutputRegisterCCS811RAW_REF_NTC			= 0x06,
 
 	kWarpSensorOutputRegisterL3GD20HOUT_TEMP			= 0x26,
 	kWarpSensorOutputRegisterL3GD20HOUT_X_L				= 0x28,
