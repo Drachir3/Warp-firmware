@@ -74,7 +74,6 @@ typedef enum
 	kWarpSensorMAG3110,
 	kWarpSensorL3GD20H,
 	kWarpSensorLPS25H,
-	kWarpSensorTCS34725,
 	kWarpSensorPAN1326,
 	kWarpSensorSCD30,
 } WarpSensorDevice;

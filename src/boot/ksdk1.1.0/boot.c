@@ -108,11 +108,6 @@
 	volatile WarpI2CDeviceState			deviceL3GD20HState;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVTCS34725)
-	#include "devTCS34725.h"
-	volatile WarpI2CDeviceState			deviceTCS34725State;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 	#include "devRV8803C7.h"
 	volatile WarpI2CDeviceState			deviceRV8803C7State;
@@ -1425,10 +1420,6 @@ main(void)
 		initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState,		kWarpDefaultSupplyVoltageMillivoltsL3GD20H	);
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVTCS34725)
-		initTCS34725(	0x29	/* i2cAddress */,	&deviceTCS34725State,		kWarpDefaultSupplyVoltageMillivoltsTCS34725	);
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
 		initRV8803C7(	0x32	/* i2cAddress */,					kWarpDefaultSupplyVoltageMillivoltsRV8803C7	);
 		status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
@@ -1815,12 +1806,6 @@ main(void)
 					warpPrint("\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V -- 3.6V (compiled out) \n");
 				#endif
 
-				#if (WARP_BUILD_ENABLE_DEVTCS34725)
-					warpPrint("\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V -- 3.3V\n");
-				#else
-					warpPrint("\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V -- 3.3V (compiled out) \n");
-				#endif
-
 				#if (WARP_BUILD_ENABLE_DEVINA219)
 					warpPrint("\r\t- 'l' INA219			(0x00--0x05): 3.0V -- 5.5V\n");
 				#else
@@ -1867,15 +1852,6 @@ main(void)
 					{
 						menuTargetSensor = kWarpSensorL3GD20H;
 						menuI2cDevice = &deviceL3GD20HState;
-						break;
-					}
-#endif
-
-#if (WARP_BUILD_ENABLE_DEVTCS34725)
-					case 'd':
-					{
-						menuTargetSensor = kWarpSensorTCS34725;
-						menuI2cDevice = &deviceTCS34725State;
 						break;
 					}
 #endif
@@ -2719,36 +2695,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			break;
 		}
 
-		case kWarpSensorTCS34725:
-		{
-			/*
-			 *	TCS34725: VDD 2.7V -- 3.3V
-			 */
-			#if WARP_BUILD_ENABLE_DEVTCS34725
-				loopForSensor(	"\r\nTCS34725:\n\r",		/*	tagString			*/
-						&readSensorRegisterTCS34725,	/*	readSensorRegisterFunction	*/
-						&deviceTCS34725State,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0x1D,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tTCS34725 Read Aborted. Device Disabled :( ");
-			#endif
-
-			break;
-		}
-
-
 		default:
 		{
 			warpPrint("\r\tInvalid warpSensorDevice [%d] passed to repeatRegisterReadForDeviceAndAddress.\n", warpSensorDevice);
@@ -2924,27 +2870,4 @@ activateAllLowPowerSensorModes(bool verbose)
 	#else
 		warpPrint("\r\tPowerdown command abandoned. L3GD20H disabled\n");
 	#endif
-
-
-
-	/*
-	 *	TCS34725: By default, is in the "start" state (see page 9).
-	 *
-	 *	Make it go to sleep state. See page 17, 18, and 19.
-	 */
-	#if (WARP_BUILD_ENABLE_DEVTCS34725)
-		status = writeByteToI2cDeviceRegister(	deviceTCS34725State.i2cAddress	/*	i2cAddress		*/,
-							true				/*	sendCommandByte		*/,
-							0x00				/*	commandByte		*/,
-							true				/*	sendPayloadByte		*/,
-							0x00				/*	payloadByte		*/);
-		if ((status != kWarpStatusOK) && verbose)
-		{
-			warpPrint("\r\tPowerdown command failed, code=%d, for TCS34725 @ 0x%02x.\n", status, deviceTCS34725State.i2cAddress);
-		}
-	#else
-		warpPrint("\r\tPowerdown command abandoned. TCS34725 disabled\n");
-	#endif
-
-
 }

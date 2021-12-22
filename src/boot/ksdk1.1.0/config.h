@@ -61,7 +61,6 @@
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
 	#define		WARP_BUILD_ENABLE_DEVINA219		1
 	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
-	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
 #else
 	/*
 	 *	Otherwise: Edit these to set which code paths are activated in the firmware compilation
@@ -75,7 +74,6 @@
 	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
 	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
-	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
 #endif
 
 typedef enum
@@ -116,7 +114,6 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsLPS25H		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsMAG3110		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsL3GD20H		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsTCS34725		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsIS25xP		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsISL23415		= 1800,
