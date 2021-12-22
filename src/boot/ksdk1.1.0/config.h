@@ -52,7 +52,6 @@
 
 #if (WARP_BUILD_ENABLE_FRDMKL03)
 	#define		WARP_BUILD_ENABLE_DEVBGX		0
-	#define		WARP_BUILD_ENABLE_DEVBME680		0
 	#define		WARP_BUILD_ENABLE_DEVBMX055		0
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
@@ -73,7 +72,6 @@
 	 *	Otherwise: Edit these to set which code paths are activated in the firmware compilation
 	 */
 	#define		WARP_BUILD_ENABLE_DEVBGX		1
-	#define		WARP_BUILD_ENABLE_DEVBME680		0
 	#define		WARP_BUILD_ENABLE_DEVBMX055		0
 	#define		WARP_BUILD_ENABLE_DEVCCS811		0
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
@@ -117,7 +115,6 @@ typedef enum
 	kWarpSizesI2cBufferBytes				= 4,
 	kWarpSizesSpiBufferBytes				= 7,
 	kWarpSizesUartBufferBytes				= 8,
-	kWarpSizesBME680CalibrationValuesCount			= 41,
 
 	/*
 	 *	Voltages
@@ -133,7 +130,6 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsMAG3110		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI7021		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsL3GD20H		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBME680		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsTCS34725		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI4705		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsCCS811		= 1800,

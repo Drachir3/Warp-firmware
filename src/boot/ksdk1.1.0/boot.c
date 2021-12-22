@@ -125,12 +125,6 @@
 	volatile WarpI2CDeviceState			deviceL3GD20HState;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVBME680)
-	#include "devBME680.h"
-	volatile WarpI2CDeviceState			deviceBME680State;
-	volatile uint8_t				deviceBME680CalibrationValues[kWarpSizesBME680CalibrationValuesCount];
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVTCS34725)
 	#include "devTCS34725.h"
 	volatile WarpI2CDeviceState			deviceTCS34725State;
@@ -1479,11 +1473,6 @@ main(void)
 		initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState,		kWarpDefaultSupplyVoltageMillivoltsL3GD20H	);
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVBME680)
-//		initBME680(	0x77	/* i2cAddress */,	&deviceBME680State,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
-		initBME680(	0x77	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsBME680	);
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVTCS34725)
 		initTCS34725(	0x29	/* i2cAddress */,	&deviceTCS34725State,		kWarpDefaultSupplyVoltageMillivoltsTCS34725	);
 	#endif
@@ -1787,19 +1776,6 @@ main(void)
 			warpPrint("kWarpRV8803RegCtrl = [0x%X]\n", tmpRV8803RegisterByte);
 		}
 
-		warpPrint("About to configureSensorBME680() for measurement...\n");
-		status = configureSensorBME680(	0b00000001,	/*	payloadCtrl_Hum: Humidity oversampling (OSRS) to 1x				*/
-						0b00100100,	/*	payloadCtrl_Meas: Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
-						0b00001000	/*	payloadGas_0: Turn off heater							*/
-						);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("configureSensorBME680() failed...\n");
-		}
-
-		warpDisableI2Cpins();
-
-		warpPrint("About to loop with printSensorDataBME680()...\n");
 		while (1)
 		{
 			blinkLED(kGlauxPinLED);
@@ -1808,15 +1784,6 @@ main(void)
 				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
 			}
 
-			warpPrint("About to configureSensorBME680() for sleep...\n");
-			status = configureSensorBME680(	0b00000000,	/*	payloadCtrl_Hum: Sleep							*/
-							0b00000000,	/*	payloadCtrl_Meas: No temperature samples, no pressure samples, sleep	*/
-							0b00001000	/*	payloadGas_0: Turn off heater						*/
-						);
-			if (status != kWarpStatusOK)
-			{
-				warpPrint("configureSensorBME680() failed...\n");
-			}
 			warpDisableI2Cpins();
 			blinkLED(kGlauxPinLED);
 
@@ -1932,12 +1899,6 @@ main(void)
 					warpPrint("\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V -- 3.6V (compiled out) \n");
 				#endif
 
-				#if (WARP_BUILD_ENABLE_DEVBME680)
-					warpPrint("\r\t- 'b' BME680			(0xAA--0xF8): 1.6V -- 3.6V\n");
-				#else
-					warpPrint("\r\t- 'b' BME680			(0xAA--0xF8): 1.6V -- 3.6V (compiled out) \n");
-				#endif
-
 				#if (WARP_BUILD_ENABLE_DEVTCS34725)
 					warpPrint("\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V -- 3.3V\n");
 				#else
@@ -2039,14 +2000,7 @@ main(void)
 						break;
 					}
 #endif
-#if (WARP_BUILD_ENABLE_DEVBME680)
-					case 'b':
-					{
-						menuTargetSensor = kWarpSensorBME680;
-						menuI2cDevice = &deviceBME680State;
-						break;
-					}
-#endif
+
 #if (WARP_BUILD_ENABLE_DEVTCS34725)
 					case 'd':
 					{
@@ -2559,31 +2513,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 					0b00000000/* normal mode, disable FIFO, disable high pass filter */
 					);
 	#endif
-	#if (WARP_BUILD_ENABLE_DEVBME680)
-	numberOfConfigErrors += configureSensorBME680(	0b00000001,	/*	payloadCtrl_Hum: Humidity oversampling (OSRS) to 1x				*/
-							0b00100100,	/*	payloadCtrl_Meas: Temperature oversample 1x, pressure overdsample 1x, mode 00	*/
-							0b00001000	/*	payloadGas_0: Turn off heater							*/
-					);
-
-	if (printHeadersAndCalibration)
-	{
-		warpPrint("\r\n\nBME680 Calibration Data: ");
-		for (uint8_t i = 0; i < kWarpSizesBME680CalibrationValuesCount; i++)
-		{
-			warpPrint("0x%02x", deviceBME680CalibrationValues[i]);
-			if (i < kWarpSizesBME680CalibrationValuesCount - 1)
-			{
-				warpPrint(", ");
-			}
-			else
-			{
-				warpPrint("\n\n");
-			}
-		}
-	}
-	#endif
-
-
 	#if (WARP_BUILD_ENABLE_DEVCCS811)
 	uint8_t		payloadCCS811[1];
 	payloadCCS811[0] = 0b01000000;/* Constant power, measurement every 250ms */
@@ -2623,11 +2552,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 			warpPrint(" L3GD20H x, L3GD20H y, L3GD20H z, L3GD20H Temp,");
 		#endif
-
-		#if (WARP_BUILD_ENABLE_DEVBME680)
-			warpPrint(" BME680 Press, BME680 Temp, BME680 Hum,");
-		#endif
-
+		
 		#if (WARP_BUILD_ENABLE_DEVBMX055)
 			warpPrint(" BMX055acc x, BMX055acc y, BMX055acc z, BMX055acc Temp,");
 			warpPrint(" BMX055mag x, BMX055mag y, BMX055mag z, BMX055mag RHALL,");
@@ -2661,10 +2586,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 		#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 			printSensorDataL3GD20H(hexModeFlag);
-		#endif
-
-		#if (WARP_BUILD_ENABLE_DEVBME680)
-			printSensorDataBME680(hexModeFlag);
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVBMX055)
@@ -2890,35 +2811,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 						);
 			#else
 				warpPrint("\r\n\tINA219 Read Aborted. Device Disabled :(");
-			#endif
-
-			break;
-		}
-
-		case kWarpSensorBME680:
-		{
-			/*
-			 *	BME680: VDD 1.7--3.6
-			 */
-			#if (WARP_BUILD_ENABLE_DEVBME680)
-				loopForSensor(	"\r\nBME680:\n\r",		/*	tagString			*/
-						&readSensorRegisterBME680,	/*	readSensorRegisterFunction	*/
-						&deviceBME680State,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x1D,				/*	minAddress			*/
-						0x75,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\nBME680 Read Aborted. Device Disabled :(");
 			#endif
 
 			break;
@@ -3459,12 +3351,6 @@ activateAllLowPowerSensorModes(bool verbose)
 	#else
 		warpPrint("\r\tPowerdown command abandoned. L3GD20H disabled\n");
 	#endif
-
-
-
-	/*
-	 *	BME680: TODO
-	 */
 
 
 
