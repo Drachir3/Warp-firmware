@@ -83,11 +83,6 @@
 	volatile WarpSPIDeviceState			deviceAT45DBState;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVICE40)
-	#include "devICE40.h"
-	volatile WarpSPIDeviceState			deviceICE40State;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVBMX055)
 	#include "devBMX055.h"
 	volatile WarpI2CDeviceState			deviceBMX055accelState;
@@ -534,10 +529,6 @@ warpDeasserAllSPIchipSelects(void)
 
 	#if (WARP_BUILD_ENABLE_DEVAT45DB)
 		GPIO_DRV_SetPinOutput(kWarpPinAT45DB_SPI_nCS);
-	#endif
-
-	#if (WARP_BUILD_ENABLE_DEVICE40)
-		GPIO_DRV_SetPinOutput(kWarpPinFPGA_nCS);
 	#endif
 
 }
@@ -1631,13 +1622,6 @@ main(void)
 		}
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVICE40)
-		/*
-		 *	Only supported in main Warp variant.
-		 */
-		initICE40(kWarpPinFPGA_nCS,							kWarpDefaultSupplyVoltageMillivoltsICE40	);
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVBGX)
 		warpPrint("Configuring BGX Bluetooth.\n");
 		warpPrint("Enabling UART... ");
@@ -1833,10 +1817,6 @@ main(void)
 		#if (WARP_BUILD_ENABLE_DEVAT45DB)
 			warpPrint("\r- 'R': read bytes from Flash.\n");
 			warpPrint("\r- 'F': write bytes to Flash.\n");
-		#endif
-
-		#if (WARP_BUILD_ENABLE_DEVICE40)
-			warpPrint("\r- 'P': write bytes to FPGA configuration.\n");
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVRV8803C7)
