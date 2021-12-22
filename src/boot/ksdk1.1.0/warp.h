@@ -68,7 +68,6 @@ typedef enum
 
 typedef enum
 {
-	kWarpSensorADXL362,
 	kWarpSensorMMA8451Q,
 	kWarpSensorINA219,
 	kWarpSensorBME680,
@@ -149,9 +148,6 @@ typedef enum
 	kWarpSensorConfigurationRegisterISL23415WRreadInstruction	= 0x80,
 	kWarpSensorConfigurationRegisterISL23415WRwriteInstruction	= 0xC0,
 
-	kWarpSensorConfigurationRegisterADXL362DEVID_AD			= 0x00,
-	kWarpSensorConfigurationRegisterADXL362DEVID_MST		= 0x01,
-	kWarpSensorConfigurationRegisterADXL362RESET			= 0x1F,
 } WarpSensorConfigurationRegister;
 
 typedef enum
@@ -221,33 +217,9 @@ typedef enum
 	kWarpSensorOutputRegisterBME680hum_msb				= 0x25,
 	kWarpSensorOutputRegisterBME680hum_lsb				= 0x26,
 
-	kWarpSensorOutputRegisterADXL362XDATA_L				= 0x0E,
-	kWarpSensorOutputRegisterADXL362XDATA_H				= 0x0F,
-	kWarpSensorOutputRegisterADXL362YDATA_L				= 0x10,
-	kWarpSensorOutputRegisterADXL362YDATA_H				= 0x11,
-	kWarpSensorOutputRegisterADXL362ZDATA_L				= 0x12,
-	kWarpSensorOutputRegisterADXL362ZDATA_H				= 0x13,
-	kWarpSensorOutputRegisterADXL362TEMP_L				= 0x14,
-	kWarpSensorOutputRegisterADXL362TEMP_H				= 0x15,
-	kWarpSensorOutputRegisterADXL362STATUS				= 0x0B,
-	kWarpSensorOutputRegisterADXL362FIFO_ENTRIES_L			= 0x0C,
-	kWarpSensorOutputRegisterADXL362FIFO_ENTRIES_H			= 0x0D,
-	kWarpSensorOutputRegisterADXL362ACT_INACT_CTL			= 0x27,
-	kWarpSensorOutputRegisterADXL362FIFO_CONTROL			= 0x28,
-	kWarpSensorOutputRegisterADXL362FIFO_SAMPLES			= 0x29,
-	kWarpSensorOutputRegisterADXL362FILTER_CTL			= 0x2C,
-	kWarpSensorOutputRegisterADXL362POWER_CTL			= 0x2D,
-
 
 } WarpSensorOutputRegister;
 
-typedef enum
-{
-	kWarpSensorConfigConstADXL362registerWriteCommand		= 0x0A,
-	kWarpSensorConfigConstADXL362registerReadRegister		= 0x0B,
-	kWarpSensorConfigConstADXL362registerFIFORead			= 0x0D,
-	kWarpSensorConfigConstADXL362resetCode				= 0x52,
-} WarpSensorConfigConst;
 
 typedef enum
 {

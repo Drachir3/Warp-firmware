@@ -68,11 +68,6 @@
 #define							kWarpConstantStringErrorSanity		"\rSanity check failed!"
 
 
-#if (WARP_BUILD_ENABLE_DEVADXL362)
-	#include "devADXL362.h"
-	volatile WarpSPIDeviceState			deviceADXL362State;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVIS25xP)
 	#include "devIS25xP.h"
 	volatile WarpSPIDeviceState			deviceIS25xPState;
@@ -562,10 +557,6 @@ warpDeasserAllSPIchipSelects(void)
 		GPIO_DRV_SetPinOutput(kWarpPinAT45DB_SPI_nCS);
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVADXL362)
-		GPIO_DRV_SetPinOutput(kWarpPinADXL362_SPI_nCS);
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVICE40)
 		GPIO_DRV_SetPinOutput(kWarpPinFPGA_nCS);
 	#endif
@@ -996,8 +987,6 @@ printPinDirections(void)
 	warpPrint("SPI_MISO:%d\n", GPIO_DRV_GetPinDir(kWarpPinSPI_MISO_UART_RTS));
 	OSA_TimeDelay(100);
 	warpPrint("SPI_SCK_I2C_PULLUP_EN:%d\n", GPIO_DRV_GetPinDir(kWarpPinSPI_SCK_I2C_PULLUP_EN));
-	OSA_TimeDelay(100);
-	warpPrint("ADXL362_CS:%d\n", GPIO_DRV_GetPinDir(kWarpPinADXL362_CS));
 	OSA_TimeDelay(100);
 }
 */
@@ -1581,32 +1570,6 @@ main(void)
 	 *	Initialization: Devices hanging off SPI
 	 */
 
-	#if (WARP_BUILD_ENABLE_DEVADXL362)
-		/*
-		 *	Only supported in main Warp variant.
-		 */
-		initADXL362(kWarpPinADXL362_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsADXL362	);
-
-		status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_AD, 1);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("ADXL362: SPI transaction to read DEVID_AD failed...\n");
-		}
-		else
-		{
-			warpPrint("ADXL362: DEVID_AD = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);
-		}
-
-		status = readSensorRegisterADXL362(kWarpSensorConfigurationRegisterADXL362DEVID_MST, 1);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("ADXL362: SPI transaction to read DEVID_MST failed...\n");
-		}
-		else
-		{
-			warpPrint("ADXL362: DEVID_MST = [0x%02X].\n", deviceADXL362State.spiSinkBuffer[2]);
-		}
-	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVIS25xP && WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		/*
@@ -1954,11 +1917,6 @@ main(void)
 			{
 				warpPrint("\r\tSelect:\n");
 
-				#if (WARP_BUILD_ENABLE_DEVADXL362)
-					warpPrint("\r\t- '1' ADXL362			(0x00--0x2D): 1.6V -- 3.5V\n");
-				#else
-					warpPrint("\r\t- '1' ADXL362			(0x00--0x2D): 1.6V -- 3.5V (compiled out) \n");
-				#endif
 
 				#if (WARP_BUILD_ENABLE_DEVBMX055)
 					warpPrint("\r\t- '2' BMX055accel		(0x00--0x3F): 2.4V -- 3.6V\n");
@@ -2053,14 +2011,6 @@ main(void)
 
 				switch(key)
 				{
-					#if (WARP_BUILD_ENABLE_DEVADXL362)
-						case '1':
-						{
-							menuTargetSensor = kWarpSensorADXL362;
-
-							break;
-						}
-					#endif
 
 					#if (WARP_BUILD_ENABLE_DEVBMX055)
 						case '2':
@@ -2293,20 +2243,6 @@ main(void)
 
 				if (i2cAddress == 0x99)
 				{
-#if (WARP_BUILD_ENABLE_DEVADXL362)
-					warpPrint("\r\n\tWriting [0x%02x] to SPI register [0x%02x]...\n", payloadByte[0], menuRegisterAddress);
-					status = writeSensorRegisterADXL362(	0x0A			/*	command == write register	*/,
-										menuRegisterAddress,
-										payloadByte[0]		/*	writeValue			*/,
-										1			/*	numberOfBytes			*/
-									);
-					if (status != kWarpStatusOK)
-					{
-						warpPrint("\r\n\tSPI write failed, error %d.\n\n", status);
-					}
-					#else
-					warpPrint("\r\n\tSPI write failed. ADXL362 Disabled");
-#endif
 				}
 				else
 				{
@@ -2745,10 +2681,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	{
 		warpPrint("Measurement number, RTC->TSR, RTC->TPR,\t\t");
 
-		#if (WARP_BUILD_ENABLE_DEVADXL362)
-			warpPrint(" ADXL362 x, ADXL362 y, ADXL362 z,");
-		#endif
-
 		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 			warpPrint(" MMA8451 x, MMA8451 y, MMA8451 z,");
 		#endif
@@ -2791,9 +2723,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	{
 		warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
 
-		#if (WARP_BUILD_ENABLE_DEVADXL362)
-			printSensorDataADXL362(hexModeFlag);
-		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 			printSensorDataMMA8451Q(hexModeFlag);
@@ -2987,34 +2916,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 {
 	switch (warpSensorDevice)
 	{
-		case kWarpSensorADXL362:
-		{
-			/*
-			 *	ADXL362: VDD 1.6--3.5
-			 */
-			#if (WARP_BUILD_ENABLE_DEVADXL362)
-				loopForSensor(	"\r\nADXL362:\n\r",		/*	tagString			*/
-						&readSensorRegisterADXL362,	/*	readSensorRegisterFunction	*/
-						NULL,				/*	i2cDeviceState			*/
-						&deviceADXL362State,		/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0x2E,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tADXL362 Read Aborted. Device Disabled :(");
-			#endif
-
-			break;
-		}
 
 		case kWarpSensorMMA8451Q:
 		{
@@ -3486,10 +3387,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 		}
 	}
 
-	if (warpSensorDevice != kWarpSensorADXL362)
-	{
-		warpDisableI2Cpins();
-	}
 }
 
 
@@ -3622,12 +3519,6 @@ powerupAllSensors(void)
 void
 activateAllLowPowerSensorModes(bool verbose)
 {
-	/*
-	 *	ADXL362:	See Power Control Register (Address: 0x2D, Reset: 0x00).
-	 *
-	 *	POR values are OK.
-	 */
-
 	/*
 	 *	IS25XP:	Put in powerdown momde
 	 */
