@@ -80,7 +80,6 @@ typedef enum
 	kWarpSensorLPS25H,
 	kWarpSensorTCS34725,
 	kWarpSensorSI4705,
-	kWarpSensorHDC1000,
 	kWarpSensorSI7021,
 	kWarpSensorCCS811,
 	kWarpSensorPAN1326,
@@ -102,8 +101,6 @@ typedef enum
 
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG1		= 0x10,
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG2		= 0x11,
-
-	kWarpSensorConfigurationRegisterHDC1000Configuration		= 0x02,
 
 	kWarpSensorConfigurationRegisterCCS811MEAS_MODE			= 0x01,
 	kWarpSensorConfigurationRegisterCCS811APP_START			= 0xF4,
@@ -169,8 +166,6 @@ typedef enum
 	kWarpSensorOutputRegisterMAG3110OUT_Z_LSB			= 0x06,
 	kWarpSensorOutputRegisterMAG3110DIE_TEMP			= 0x0F,
 
-	kWarpSensorOutputRegisterHDC1000Temperature			= 0x00,
-	kWarpSensorOutputRegisterHDC1000Humidity			= 0x01,
 
 	kWarpSensorOutputRegisterCCS811ALG_DATA				= 0x02,
 	kWarpSensorOutputRegisterCCS811RAW_DATA				= 0x03,
