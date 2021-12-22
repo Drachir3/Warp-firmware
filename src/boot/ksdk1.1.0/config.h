@@ -62,7 +62,6 @@
 	#define		WARP_BUILD_ENABLE_DEVINA219		1
 	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
 	#define		WARP_BUILD_ENABLE_DEVSI4705		0
-	#define		WARP_BUILD_ENABLE_DEVSI7021		0
 	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
 #else
 	/*
@@ -78,7 +77,6 @@
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
 	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
 	#define		WARP_BUILD_ENABLE_DEVSI4705		0
-	#define		WARP_BUILD_ENABLE_DEVSI7021		0
 	#define		WARP_BUILD_ENABLE_DEVTCS34725		0
 #endif
 
@@ -119,7 +117,6 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsINA219		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsLPS25H		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsMAG3110		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsSI7021		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsL3GD20H		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsTCS34725		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsSI4705		= 1800,

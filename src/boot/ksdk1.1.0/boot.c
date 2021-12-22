@@ -103,11 +103,6 @@
 	volatile WarpI2CDeviceState			deviceMAG3110State;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVSI7021)
-	#include "devSI7021.h"
-	volatile WarpI2CDeviceState			deviceSI7021State;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
 	#include "devL3GD20H.h"
 	volatile WarpI2CDeviceState			deviceL3GD20HState;
@@ -1439,10 +1434,6 @@ main(void)
 		initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State,		kWarpDefaultSupplyVoltageMillivoltsMAG3110	);
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVSI7021)
-		initSI7021(	0x40	/* i2cAddress */,	&deviceSI7021State,		kWarpDefaultSupplyVoltageMillivoltsSI7021	);
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 		initL3GD20H(	0x6A	/* i2cAddress */,	&deviceL3GD20HState,		kWarpDefaultSupplyVoltageMillivoltsL3GD20H	);
 	#endif
@@ -1835,12 +1826,6 @@ main(void)
 					warpPrint("\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V (compiled out) \n");
 				#endif
 
-				#if (WARP_BUILD_ENABLE_DEVSI7021)
-					warpPrint("\r\t- '9' SI7021			(0x00--0x0F): 1.9V -- 3.6V\n");
-				#else
-					warpPrint("\r\t- '9' SI7021			(0x00--0x0F): 1.9V -- 3.6V (compiled out) \n");
-				#endif
-
 				#if (WARP_BUILD_ENABLE_DEVL3GD20H)
 					warpPrint("\r\t- 'a' L3GD20H			(0x0F--0x39): 2.2V -- 3.6V\n");
 				#else
@@ -1900,14 +1885,6 @@ main(void)
 					#endif
 
 
-#if (WARP_BUILD_ENABLE_DEVSI7021)
-					case '9':
-					{
-						menuTargetSensor = kWarpSensorSI7021;
-						menuI2cDevice = &deviceSI7021State;
-						break;
-					}
-#endif
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
 					case 'a':
 					{
@@ -2830,35 +2807,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			break;
 		}
 
-		case kWarpSensorSI7021:
-		{
-			/*
-			 *	SI7021: VDD 1.9V -- 3.6V
-			 */
-			#if (WARP_BUILD_ENABLE_DEVSI7021)
-				loopForSensor(	"\r\nSI7021:\n\r",		/*	tagString			*/
-						&readSensorRegisterSI7021,	/*	readSensorRegisterFunction	*/
-						&deviceSI7021State,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0x09,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tSI7021 Read Aborted. Device Disabled :( ");
-			#endif
-
-			break;
-		}
-
 
 		default:
 		{
@@ -3015,12 +2963,6 @@ activateAllLowPowerSensorModes(bool verbose)
 	 *
 	 *	POR state seems to be powered down.
 	 */
-
-
-	/*
-	 *	SI7021: Can't talk to it correctly yet.
-	 */
-
 
 
 	/*
