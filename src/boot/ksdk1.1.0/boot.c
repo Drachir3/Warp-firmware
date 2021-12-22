@@ -56,7 +56,6 @@
 #include "fsl_mcglite_hal.h"
 #include "fsl_port_hal.h"
 #include "fsl_lpuart_driver.h"
-#include "glaux.h"
 #include "warp.h"
 #include "errstrs.h"
 #include "gpio_pins.h"
@@ -490,13 +489,8 @@ warpEnableSPIpins(void)
 	/*	kWarpPinSPI_MOSI_UART_CTS --> PTA7 (ALT3)	*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAlt3);
 
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		/*	kWarpPinSPI_SCK	--> PTA9	(ALT3)		*/
-		PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAlt3);
-	#else
-		/*	kWarpPinSPI_SCK	--> PTB0	(ALT3)		*/
-		PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAlt3);
-	#endif
+	/*	kWarpPinSPI_SCK	--> PTB0	(ALT3)		*/
+	PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAlt3);
 
 	/*
 	 *	Initialize SPI master. See KSDK13APIRM.pdf Section 70.4
@@ -523,13 +517,9 @@ warpDisableSPIpins(void)
 	/*	kWarpPinSPI_MOSI_UART_CTS	--> PTA7	(GPIO)		*/
 	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortMuxAsGpio);
 
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		/*	kWarpPinSPI_SCK	--> PTA9	(GPIO)			*/
-		PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
-	#else
-		/*	kWarpPinSPI_SCK	--> PTB0	(GPIO)			*/
-		PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
-	#endif
+	/*	kWarpPinSPI_SCK	--> PTB0	(GPIO)			*/
+	PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
+
 
 //TODO: we don't use HW flow control so can remove these since we don't use the RTS/CTS
 	GPIO_DRV_ClearPinOutput(kWarpPinSPI_MOSI_UART_CTS);
@@ -563,9 +553,6 @@ warpDeasserAllSPIchipSelects(void)
 	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortMuxAsGpio);
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
-	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVISL23415)
 		GPIO_DRV_SetPinOutput(kWarpPinISL23415_SPI_nCS);
@@ -583,9 +570,6 @@ warpDeasserAllSPIchipSelects(void)
 		GPIO_DRV_SetPinOutput(kWarpPinFPGA_nCS);
 	#endif
 
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		GPIO_DRV_SetPinOutput(kGlauxPinFlash_SPI_nCS);
-	#endif
 }
 
 
@@ -639,198 +623,89 @@ warpDisableI2Cpins(void)
 }
 
 
-#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-	void
-	lowPowerPinStates(void)
-	{
-		/*
-		 *	Following Section 5 of "Power Management for Kinetis L Family" (AN5088.pdf),
-		 *	we configure all pins as output and set them to a known state, except for the
-		 *	sacrificial pins (WLCSP package, Glaux) where we set them to disabled. We choose
-		 *	to set non-disabled pins to '0'.
-		 *
-		 *	NOTE: Pin state "disabled" means default functionality is active.
-		 */
 
-		/*
-		 *			PORT A
-		 */
-		/*
-		 *	Leave PTA0/1/2 SWD pins in their default state (i.e., as SWD / Alt3).
-		 *
-		 *	See GitHub issue https://github.com/physical-computation/Warp-firmware/issues/54
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAlt3);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAlt3);
+void
+lowPowerPinStates(void)
+{
+	/*
+	 *	Following Section 5 of "Power Management for Kinetis L Family" (AN5088.pdf),
+	 *	we configure all pins as output and set them to a known state. We choose
+	 *	to set them all to '0' since it happens that the devices we want to keep
+	 *	deactivated (SI4705) also need '0'.
+	 */
 
-		/*
-		 *	PTA3 and PTA4 are the EXTAL0/XTAL0. They are also connected to the clock output
-		 *	of the RV8803 (and PTA4 is a sacrificial pin for PTA3), so do not want to drive them.
-		 *	We however have to configure PTA3 to Alt0 (kPortPinDisabled) to get the EXTAL0
-		 *	functionality.
-		 *
-		 *	NOTE:	kPortPinDisabled is the equivalent of `Alt0`
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 3, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 4, kPortPinDisabled);
+	/*
+	 *			PORT A
+	 */
+	/*
+	 *	For now, don't touch the PTA0/1/2 SWD pins. Revisit in the future.
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAlt3);
 
-		/*
-		 *	Disable PTA5
-		 *
-		 *	NOTE: Enabling this significantly increases current draw
-		 *	(from ~180uA to ~4mA) and we don't need the RTC on Glaux.
-		 *
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortPinDisabled);
+	/*
+	 *	PTA3 and PTA4 are the EXTAL0/XTAL0. They are also connected to the clock output
+	 *	of the RV8803 (and PTA4 is a sacrificial pin for PTA3), so do not want to drive them.
+	 *	We however have to configure PTA3 to Alt0 (kPortPinDisabled) to get the EXTAL0
+	 *	functionality.
+	 *
+	 *	NOTE:	kPortPinDisabled is the equivalent of `Alt0`
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 3, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 4, kPortPinDisabled);
 
-		/*
-		 *	PTA6, PTA7, PTA8, and PTA9 on Glaux are SPI and sacrificial SPI.
-		 *
-		 *	Section 2.6 of Kinetis Energy Savings – Tips and Tricks says
-		 *
-		 *		"Unused pins should be configured in the disabled state, mux(0),
-		 *		to prevent unwanted leakage (potentially caused by floating inputs)."
-		 *
-		 *	However, other documents advice to place pin as GPIO and drive low or high.
-		 *	For now, leave disabled. Filed issue #54 low-power pin states to investigate.
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortPinDisabled);
+	/*
+	 *	Disable PTA5
+	 *
+	 *	NOTE: Enabling this significantly increases current draw
+	 *	(from ~180uA to ~4mA) and we don't need the RTC on revC.
+	 *
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortPinDisabled);
 
-		/*
-		 *	NOTE: The KL03 has no PTA10 or PTA11
-		 */
+	/*
+	 *	Section 2.6 of Kinetis Energy Savings – Tips and Tricks says
+	 *
+	 *		"Unused pins should be configured in the disabled state, mux(0),
+	 *		to prevent unwanted leakage (potentially caused by floating inputs)."
+	 *
+	 *	However, other documents advice to place pin as GPIO and drive low or high.
+	 *	For now, leave disabled. Filed issue #54 low-power pin states to investigate.
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortPinDisabled);
 
-		/*
-		 *	In Glaux, PTA12 is a sacrificial pin for SWD_RESET, so careful not to drive it.
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 12, kPortPinDisabled);
+	/*
+	 *	NOTE: The KL03 has no PTA10 or PTA11
+	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 12, kPortPinDisabled);
 
 
+	/*
+	 *			PORT B
+	 */
+	PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 6, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 7, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 10, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 11, kPortPinDisabled);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 13, kPortPinDisabled);
+}
 
-		/*
-		 *			PORT B
-		 *
-		 *	PTB0 is LED on Glaux. PTB1 is unused, and PTB2 is FLASH_!CS
-		 */
-		PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortMuxAsGpio);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortMuxAsGpio);
-
-		/*
-		 *	PTB3 and PTB4 (I2C pins) are true open-drain and we
-		 *	purposefully leave them disabled since they have pull-ups.
-		 *	PTB5 is sacrificial for I2C_SDA, so disable.
-		 */
-		PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortPinDisabled);
-
-		/*
-		 *	NOTE:
-		 *
-		 *	The KL03 has no PTB8, PTB9, or PTB12.  Additionally, the WLCSP package
-		 *	we in Glaux has no PTB6, PTB7, PTB10, or PTB11.
-		 */
-
-		/*
-		 *	In Glaux, PTB13 is a sacrificial pin for SWD_RESET, so careful not to drive it.
-		 */
-		PORT_HAL_SetMuxMode(PORTB_BASE, 13, kPortPinDisabled);
-
-		GPIO_DRV_SetPinOutput(kGlauxPinFlash_SPI_nCS);
-		GPIO_DRV_ClearPinOutput(kGlauxPinLED);
-
-		return;
-	}
-#else
-	void
-	lowPowerPinStates(void)
-	{
-		/*
-		 *	Following Section 5 of "Power Management for Kinetis L Family" (AN5088.pdf),
-		 *	we configure all pins as output and set them to a known state. We choose
-		 *	to set them all to '0' since it happens that the devices we want to keep
-		 *	deactivated (SI4705) also need '0'.
-		 */
-
-		/*
-		 *			PORT A
-		 */
-		/*
-		 *	For now, don't touch the PTA0/1/2 SWD pins. Revisit in the future.
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 0, kPortMuxAlt3);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 1, kPortMuxAlt3);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 2, kPortMuxAlt3);
-
-		/*
-		 *	PTA3 and PTA4 are the EXTAL0/XTAL0. They are also connected to the clock output
-		 *	of the RV8803 (and PTA4 is a sacrificial pin for PTA3), so do not want to drive them.
-		 *	We however have to configure PTA3 to Alt0 (kPortPinDisabled) to get the EXTAL0
-		 *	functionality.
-		 *
-		 *	NOTE:	kPortPinDisabled is the equivalent of `Alt0`
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 3, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 4, kPortPinDisabled);
-
-		/*
-		 *	Disable PTA5
-		 *
-		 *	NOTE: Enabling this significantly increases current draw
-		 *	(from ~180uA to ~4mA) and we don't need the RTC on revC.
-		 *
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 5, kPortPinDisabled);
-
-		/*
-		 *	Section 2.6 of Kinetis Energy Savings – Tips and Tricks says
-		 *
-		 *		"Unused pins should be configured in the disabled state, mux(0),
-		 *		to prevent unwanted leakage (potentially caused by floating inputs)."
-		 *
-		 *	However, other documents advice to place pin as GPIO and drive low or high.
-		 *	For now, leave disabled. Filed issue #54 low-power pin states to investigate.
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 6, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 7, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortPinDisabled);
-
-		/*
-		 *	NOTE: The KL03 has no PTA10 or PTA11
-		 */
-		PORT_HAL_SetMuxMode(PORTA_BASE, 12, kPortPinDisabled);
-
-
-		/*
-		 *			PORT B
-		 */
-		PORT_HAL_SetMuxMode(PORTB_BASE, 0, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 2, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 3, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 4, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 6, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 7, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 10, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 11, kPortPinDisabled);
-		PORT_HAL_SetMuxMode(PORTB_BASE, 13, kPortPinDisabled);
-	}
-#endif
 
 
 void
 disableTPS62740(void)
 {
-	#if (!WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		GPIO_DRV_ClearPinOutput(kWarpPinTPS62740_REGCTRL);
-	#endif
+	GPIO_DRV_ClearPinOutput(kWarpPinTPS62740_REGCTRL);
 }
 
 void
@@ -2795,9 +2670,9 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVINA219)
 	uint8_t	payloadConfigMSB, payloadConfigLSB, payloadCalibMSB, payloadCalibLSB;
-	payloadConfigMSB = 0x01;
+	payloadConfigMSB = 0x11;
 	payloadConfigLSB = 0x9F;
-	payloadCalibMSB = 0xA0;
+	payloadCalibMSB = 0x10;
 	payloadCalibLSB = 0x00;
 	numberOfConfigErrors += configureSensorINA219(payloadConfigMSB,
 							payloadConfigLSB,
@@ -2879,7 +2754,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		#endif
 		
 		#if (WARP_BUILD_ENABLE_DEVINA219)
-			warpPrint(" INA219 load current,");
+			warpPrint(" INA219 load current, INA219 Shunt Voltage, INA219 Bus Voltage");
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVMAG3110)
