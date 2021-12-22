@@ -107,8 +107,6 @@ ADD_EXECUTABLE(Warp
     "${ProjDirPath}/../../src/devCCS811.c"
     "${ProjDirPath}/../../src/devRV8803C7.c"
     "${ProjDirPath}/../../src/devBGX.c"
-    "${ProjDirPath}/../../src/devAS7262.c"
-    "${ProjDirPath}/../../src/devAS7263.c"
     "${ProjDirPath}/../../src/devSSD1331.c"
     "${ProjDirPath}/../../src/devINA219.c"
 #   "${ProjDirPath}/../../src/devMAX11300.c
