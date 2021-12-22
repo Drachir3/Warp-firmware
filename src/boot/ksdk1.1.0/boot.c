@@ -113,11 +113,6 @@
 	volatile WarpI2CDeviceState			deviceTCS34725State;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVSI4705)
-	#include "devSI4705.h"
-	volatile WarpI2CDeviceState			deviceSI4705State;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 	#include "devRV8803C7.h"
 	volatile WarpI2CDeviceState			deviceRV8803C7State;
@@ -317,15 +312,7 @@ sleepUntilReset(void)
 {
 	while (1)
 	{
-		#if (WARP_BUILD_ENABLE_DEVSI4705)
-			GPIO_DRV_SetPinOutput(kWarpPinSI4705_nRST);
-		#endif
-
 		warpLowPowerSecondsSleep(1, false /* forceAllPinsIntoLowPowerState */);
-
-		#if (WARP_BUILD_ENABLE_DEVSI4705)
-			GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
-		#endif
 
 		warpLowPowerSecondsSleep(60, true /* forceAllPinsIntoLowPowerState */);
 	}
@@ -1442,10 +1429,6 @@ main(void)
 		initTCS34725(	0x29	/* i2cAddress */,	&deviceTCS34725State,		kWarpDefaultSupplyVoltageMillivoltsTCS34725	);
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVSI4705)
-		initSI4705(	0x11	/* i2cAddress */,	&deviceSI4705State,		kWarpDefaultSupplyVoltageMillivoltsSI4705	);
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
 		initRV8803C7(	0x32	/* i2cAddress */,					kWarpDefaultSupplyVoltageMillivoltsRV8803C7	);
 		status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
@@ -1838,12 +1821,6 @@ main(void)
 					warpPrint("\r\t- 'd' TCS34725			(0x00--0x1D): 2.7V -- 3.3V (compiled out) \n");
 				#endif
 
-				#if (WARP_BUILD_ENABLE_DEVSI4705)
-					warpPrint("\r\t- 'e' SI4705			(n/a):        2.7V -- 5.5V\n");
-				#else
-					warpPrint("\r\t- 'e' SI4705			(n/a):        2.7V -- 5.5V (compiled out) \n");
-				#endif
-
 				#if (WARP_BUILD_ENABLE_DEVINA219)
 					warpPrint("\r\t- 'l' INA219			(0x00--0x05): 3.0V -- 5.5V\n");
 				#else
@@ -1902,14 +1879,7 @@ main(void)
 						break;
 					}
 #endif
-#if (WARP_BUILD_ENABLE_DEVSI4705)
-					case 'e':
-					{
-						menuTargetSensor = kWarpSensorSI4705;
-						menuI2cDevice = &deviceSI4705State;
-						break;
-					}
-#endif
+
 #if (WARP_BUILD_ENABLE_DEVINA219)
 					case 'l':
 					{
@@ -2778,35 +2748,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			break;
 		}
 
-		case kWarpSensorSI4705:
-		{
-			/*
-			 *	SI4705: VDD 2.7V -- 5.5V
-			 */
-			#if (WARP_BUILD_ENABLE_DEVSI4705)
-				loopForSensor(	"\r\nSI4705:\n\r",		/*	tagString			*/
-						&readSensorRegisterSI4705,	/*	readSensorRegisterFunction	*/
-						&deviceSI4705State,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0x09,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tSI4705 Read Aborted. Device Disabled :( ");
-			#endif
-
-			break;
-		}
-
 
 		default:
 		{
@@ -3006,13 +2947,4 @@ activateAllLowPowerSensorModes(bool verbose)
 	#endif
 
 
-
-	/*
-	 *	SI4705: Send a POWER_DOWN command (byte 0x17). See AN332 page 124 and page 132.
-	 *
-	 *	For now, simply hold its reset line low.
-	 */
-	#if (WARP_BUILD_ENABLE_DEVSI4705)
-		GPIO_DRV_ClearPinOutput(kWarpPinSI4705_nRST);
-	#endif
 }
