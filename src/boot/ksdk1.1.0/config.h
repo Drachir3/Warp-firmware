@@ -53,7 +53,6 @@
 #if (WARP_BUILD_ENABLE_FRDMKL03)
 	#define		WARP_BUILD_ENABLE_DEVBGX		0
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
-	#define		WARP_BUILD_ENABLE_DEVAT45DB		0
 	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
 	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
@@ -65,7 +64,6 @@
 	 */
 	#define		WARP_BUILD_ENABLE_DEVBGX		1
 	#define		WARP_BUILD_ENABLE_DEVIS25xP		0
-	#define		WARP_BUILD_ENABLE_DEVAT45DB		1
 	#define		WARP_BUILD_ENABLE_DEVLPS25H		0
 	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
@@ -111,5 +109,4 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsMAG3110		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsIS25xP		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 1800,
 } WarpDefaults;

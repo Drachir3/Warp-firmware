@@ -73,11 +73,6 @@
 	volatile WarpSPIDeviceState			deviceIS25xPState;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVAT45DB)
-	#include "devAT45DB.h"
-	volatile WarpSPIDeviceState			deviceAT45DBState;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 	#include "devMMA8451Q.h"
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
@@ -482,11 +477,6 @@ warpDeasserAllSPIchipSelects(void)
 	PORT_HAL_SetMuxMode(PORTA_BASE, 9, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTA_BASE, 8, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 1, kPortMuxAsGpio);
-
-	#if (WARP_BUILD_ENABLE_DEVAT45DB)
-		GPIO_DRV_SetPinOutput(kWarpPinAT45DB_SPI_nCS);
-	#endif
-
 }
 
 
@@ -1496,26 +1486,6 @@ main(void)
 		
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVAT45DB)
-		/*
-		 *	Only supported in main Warp variant.
-		 */
-		initAT45DB(kWarpPinAT45DB_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsAT45DB	);
-
-		status = spiTransactionAT45DB(&deviceAT45DBState, (uint8_t *)"\x9F\x00\x00\x00\x00\x00", 6 /* opCount */);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("AT45DB: SPI transaction to read Manufacturer ID failed...\n");
-		}
-		else
-		{
-			warpPrint("AT45DB Manufacturer ID=[0x%02X], Device ID=[0x%02X 0x%02X], Extended Device Information=[0x%02X 0x%02X]\n",
-						deviceAT45DBState.spiSinkBuffer[1],
-						deviceAT45DBState.spiSinkBuffer[2], deviceAT45DBState.spiSinkBuffer[3],
-						deviceAT45DBState.spiSinkBuffer[4], deviceAT45DBState.spiSinkBuffer[5]);
-		}
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVBGX)
 		warpPrint("Configuring BGX Bluetooth.\n");
 		warpPrint("Enabling UART... ");
@@ -1707,11 +1677,6 @@ main(void)
 		warpPrint("\r- 's': power up all sensors.\n");
 		warpPrint("\r- 't': dump processor state.\n");
 		warpPrint("\r- 'u': set I2C address.\n");
-
-		#if (WARP_BUILD_ENABLE_DEVAT45DB)
-			warpPrint("\r- 'R': read bytes from Flash.\n");
-			warpPrint("\r- 'F': write bytes to Flash.\n");
-		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVRV8803C7)
 			warpPrint("\r- 'v': Enter VLLS0 low-power mode for 3s, then reset\n");
