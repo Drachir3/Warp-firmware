@@ -52,7 +52,6 @@
 
 #if (WARP_BUILD_ENABLE_FRDMKL03)
 	#define		WARP_BUILD_ENABLE_DEVBGX		0
-	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
 	#define		WARP_BUILD_ENABLE_DEVINA219		1
 	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
@@ -61,7 +60,6 @@
 	 *	Otherwise: Edit these to set which code paths are activated in the firmware compilation
 	 */
 	#define		WARP_BUILD_ENABLE_DEVBGX		1
-	#define		WARP_BUILD_ENABLE_DEVMAG3110		0
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
 	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
 #endif
@@ -101,7 +99,6 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsBGX			= 3300,
 	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsINA219		= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsMAG3110		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,
 
 } WarpDefaults;

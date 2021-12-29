@@ -78,11 +78,6 @@
 	volatile WarpI2CDeviceState			deviceINA219State;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVMAG3110)
-	#include "devMAG3110.h"
-	volatile WarpI2CDeviceState			deviceMAG3110State;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVL3GD20H)
 	#include "devL3GD20H.h"
 	volatile WarpI2CDeviceState			deviceL3GD20HState;
@@ -1379,10 +1374,6 @@ main(void)
 		initINA219(	0x40	/* i2cAddress */,	/* &deviceINA219State,	*/	kWarpDefaultSupplyVoltageMillivoltsINA219	);
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVMAG3110)
-		initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State,		kWarpDefaultSupplyVoltageMillivoltsMAG3110	);
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
 		initRV8803C7(	0x32	/* i2cAddress */,					kWarpDefaultSupplyVoltageMillivoltsRV8803C7	);
 		status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
@@ -1635,12 +1626,6 @@ main(void)
 					warpPrint("\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V (compiled out) \n");
 				#endif
 
-				#if (WARP_BUILD_ENABLE_DEVMAG3110)
-					warpPrint("\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
-				#else
-					warpPrint("\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V (compiled out) \n");
-				#endif
-
 				#if (WARP_BUILD_ENABLE_DEVINA219)
 					warpPrint("\r\t- 'l' INA219			(0x00--0x05): 3.0V -- 5.5V\n");
 				#else
@@ -1663,15 +1648,6 @@ main(void)
 						}
 					#endif
 
-
-					#if (WARP_BUILD_ENABLE_DEVMAG3110)
-						case '7':
-						{
-							menuTargetSensor = kWarpSensorMAG3110;
-							menuI2cDevice = &deviceMAG3110State;
-							break;
-						}
-					#endif
 
 #if (WARP_BUILD_ENABLE_DEVINA219)
 					case 'l':
@@ -2150,11 +2126,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 							payloadCalibLSB
 							);
 	#endif	
-	#if (WARP_BUILD_ENABLE_DEVMAG3110)
-	numberOfConfigErrors += configureSensorMAG3110(	0x00,/*	Payload: DR 000, OS 00, 80Hz, ADC 1280, Full 16bit, standby mode to set up register*/
-					0xA0,/*	Payload: AUTO_MRST_EN enable, RAW value without offset */
-					);
-	#endif
 
 	if (printHeadersAndCalibration)
 	{
@@ -2166,10 +2137,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		
 		#if (WARP_BUILD_ENABLE_DEVINA219)
 			warpPrint(" INA219 load current, INA219 Shunt Voltage, INA219 Bus Voltage");
-		#endif
-
-		#if (WARP_BUILD_ENABLE_DEVMAG3110)
-			warpPrint(" MAG3110 x, MAG3110 y, MAG3110 z, MAG3110 Temp,");
 		#endif
 
 		warpPrint(" RTC->TSR, RTC->TPR, # Config Errors");
@@ -2187,10 +2154,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 		#if (WARP_BUILD_ENABLE_DEVINA219)
 			printSensorDataINA219(hexModeFlag);		// Prints the contents of the current register 0x04
-		#endif
-
-		#if (WARP_BUILD_ENABLE_DEVMAG3110)
-			printSensorDataMAG3110(hexModeFlag);
 		#endif
 
 		warpPrint(" %12d, %6d, %2u\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
@@ -2410,35 +2373,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			break;
 		}
 
-		case kWarpSensorMAG3110:
-		{
-			/*
-			 *	MAG3110: VDD 1.95 -- 3.6
-			 */
-			#if (WARP_BUILD_ENABLE_DEVMAG3110)
-				loopForSensor(	"\r\nMAG3110:\n\r",		/*	tagString			*/
-						&readSensorRegisterMAG3110,	/*	readSensorRegisterFunction	*/
-						&deviceMAG3110State,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0x11,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tMAG3110 Read Aborted. Device Disabled :( ");
-			#endif
-
-			break;
-		}
-
 		default:
 		{
 			warpPrint("\r\tInvalid warpSensorDevice [%d] passed to repeatRegisterReadForDeviceAndAddress.\n", warpSensorDevice);
@@ -2567,11 +2501,5 @@ activateAllLowPowerSensorModes(bool verbose)
 	 *	POR state seems to be not too bad.
 	 */
 
-
-	/*
-	 *	MAG3110: See Register CTRL_REG1 at 0x10. (page 19).
-	 *
-	 *	POR state seems to be powered down.
-	 */
 
 }
