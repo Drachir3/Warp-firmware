@@ -93,16 +93,6 @@ typedef enum
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG1		= 0x10,
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG2		= 0x11,
 
-	/*
-	 *	See Table 4 of the ISL23415 manual. We choose to use the encoding
-	 *	where we always set R4:R0 to 0000
-	 */
-	kWarpSensorConfigurationRegisterISL23415nopInstruction		= 0x00,
-	kWarpSensorConfigurationRegisterISL23415ACRreadInstruction	= 0x20,
-	kWarpSensorConfigurationRegisterISL23415ACRwriteInstruction	= 0x60,
-	kWarpSensorConfigurationRegisterISL23415WRreadInstruction	= 0x80,
-	kWarpSensorConfigurationRegisterISL23415WRwriteInstruction	= 0xC0,
-
 } WarpSensorConfigurationRegister;
 
 typedef enum
