@@ -78,11 +78,6 @@
 	volatile WarpI2CDeviceState			deviceINA219State;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVLPS25H)
-	#include "devLPS25H.h"
-	volatile WarpI2CDeviceState			deviceLPS25HState;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVMAG3110)
 	#include "devMAG3110.h"
 	volatile WarpI2CDeviceState			deviceMAG3110State;
@@ -1384,10 +1379,6 @@ main(void)
 		initINA219(	0x40	/* i2cAddress */,	/* &deviceINA219State,	*/	kWarpDefaultSupplyVoltageMillivoltsINA219	);
 	#endif
 
-	#if (WARP_BUILD_ENABLE_DEVLPS25H)
-		initLPS25H(	0x5C	/* i2cAddress */,	&deviceLPS25HState,		kWarpDefaultSupplyVoltageMillivoltsLPS25H	);
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVMAG3110)
 		initMAG3110(	0x0E	/* i2cAddress */,	&deviceMAG3110State,		kWarpDefaultSupplyVoltageMillivoltsMAG3110	);
 	#endif
@@ -1644,12 +1635,6 @@ main(void)
 					warpPrint("\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V (compiled out) \n");
 				#endif
 
-				#if (WARP_BUILD_ENABLE_DEVLPS25H)
-					warpPrint("\r\t- '6' LPS25H			(0x08--0x24): 1.7V -- 3.6V\n");
-				#else
-					warpPrint("\r\t- '6' LPS25H			(0x08--0x24): 1.7V -- 3.6V (compiled out) \n");
-				#endif
-
 				#if (WARP_BUILD_ENABLE_DEVMAG3110)
 					warpPrint("\r\t- '7' MAG3110			(0x00--0x11): 1.95V -- 3.6V\n");
 				#else
@@ -1678,14 +1663,6 @@ main(void)
 						}
 					#endif
 
-					#if (WARP_BUILD_ENABLE_DEVLPS25H)
-						case '6':
-						{
-							menuTargetSensor = kWarpSensorLPS25H;
-							menuI2cDevice = &deviceLPS25HState;
-							break;
-						}
-					#endif
 
 					#if (WARP_BUILD_ENABLE_DEVMAG3110)
 						case '7':
@@ -2462,35 +2439,6 @@ repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t
 			break;
 		}
 
-		case kWarpSensorLPS25H:
-		{
-			/*
-			 *	LPS25H: VDD 1.7V -- 3.6V
-			 */
-			#if (WARP_BUILD_ENABLE_DEVLPS25H)
-				loopForSensor(	"\r\nLPS25H:\n\r",		/*	tagString			*/
-						&readSensorRegisterLPS25H,	/*	readSensorRegisterFunction	*/
-						&deviceLPS25HState,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x08,				/*	minAddress			*/
-						0x24,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tLPS25H Read Aborted. Device Disabled :( ");
-			#endif
-
-			break;
-		}
-
 		default:
 		{
 			warpPrint("\r\tInvalid warpSensorDevice [%d] passed to repeatRegisterReadForDeviceAndAddress.\n", warpSensorDevice);
@@ -2618,15 +2566,6 @@ activateAllLowPowerSensorModes(bool verbose)
 	 *
 	 *	POR state seems to be not too bad.
 	 */
-
-
-
-	/*
-	 *	LPS25H: See Register CTRL_REG1, at address 0x20 (page 26).
-	 *
-	 *	POR state seems to be powered down.
-	 */
-
 
 
 	/*
