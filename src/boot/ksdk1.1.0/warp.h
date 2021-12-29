@@ -72,7 +72,6 @@ typedef enum
 	kWarpSensorINA219,
 	kWarpSensorTMP006B,
 	kWarpSensorMAG3110,
-	kWarpSensorL3GD20H,
 	kWarpSensorLPS25H,
 	kWarpSensorPAN1326,
 	kWarpSensorSCD30,
@@ -93,10 +92,6 @@ typedef enum
 
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG1		= 0x10,
 	kWarpSensorConfigurationRegisterMAG3110CTRL_REG2		= 0x11,
-
-	kWarpSensorConfigurationRegisterL3GD20HCTRL1			= 0x20,
-	kWarpSensorConfigurationRegisterL3GD20HCTRL2			= 0x21,
-	kWarpSensorConfigurationRegisterL3GD20HCTRL5			= 0x24,
 
 	/*
 	 *	See Table 4 of the ISL23415 manual. We choose to use the encoding
@@ -130,15 +125,6 @@ typedef enum
 	kWarpSensorOutputRegisterMAG3110OUT_Z_MSB			= 0x05,
 	kWarpSensorOutputRegisterMAG3110OUT_Z_LSB			= 0x06,
 	kWarpSensorOutputRegisterMAG3110DIE_TEMP			= 0x0F,
-
-
-	kWarpSensorOutputRegisterL3GD20HOUT_TEMP			= 0x26,
-	kWarpSensorOutputRegisterL3GD20HOUT_X_L				= 0x28,
-	kWarpSensorOutputRegisterL3GD20HOUT_X_H				= 0x29,
-	kWarpSensorOutputRegisterL3GD20HOUT_Y_L				= 0x2A,
-	kWarpSensorOutputRegisterL3GD20HOUT_Y_H				= 0x2B,
-	kWarpSensorOutputRegisterL3GD20HOUT_Z_L				= 0x2C,
-	kWarpSensorOutputRegisterL3GD20HOUT_Z_H				= 0x2D,
 
 
 } WarpSensorOutputRegister;
