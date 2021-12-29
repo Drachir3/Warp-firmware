@@ -1351,15 +1351,7 @@ main(void)
 	/*
 	 *	Toggle LED3 (kWarpPinSI4705_nRST on Warp revB, kGlauxPinLED on Glaux)
 	 */
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		blinkLED(kGlauxPinLED);
-		blinkLED(kGlauxPinLED);
-		blinkLED(kGlauxPinLED);
 
-		USED(disableTPS62740);
-		USED(enableTPS62740);
-		USED(setTPS62740CommonControlLines);
-	#endif
 
 	/*
 	 *	Initialize all the sensors
@@ -1477,94 +1469,6 @@ main(void)
 		/*
 		 *	Notreached
 		 */
-	#endif
-
-	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
-
-		warpPrint("About to activate low-power modes (including IS25xP Flash)...\n");
-		activateAllLowPowerSensorModes(true /* verbose */);
-
-		uint8_t	tmpRV8803RegisterByte;
-		status = readRTCRegisterRV8803C7(kWarpRV8803RegSec, &tmpRV8803RegisterByte);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegSec, &tmpRV8803RegisterByte) failed\n");
-		}
-		else
-		{
-			warpPrint("kWarpRV8803RegSec = [0x%X]\n", tmpRV8803RegisterByte);
-		}
-
-		status = readRTCRegisterRV8803C7(kWarpRV8803RegMin, &tmpRV8803RegisterByte);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegMin, &tmpRV8803RegisterByte) failed\n");
-		}
-		else
-		{
-			warpPrint("kWarpRV8803RegMin = [0x%X]\n", tmpRV8803RegisterByte);
-		}
-
-		status = readRTCRegisterRV8803C7(kWarpRV8803RegHour, &tmpRV8803RegisterByte);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegHour, &tmpRV8803RegisterByte) failed\n");
-		}
-		else
-		{
-			warpPrint("kWarpRV8803RegHour = [0x%X]\n", tmpRV8803RegisterByte);
-		}
-
-		status = readRTCRegisterRV8803C7(kWarpRV8803RegExt, &tmpRV8803RegisterByte);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegExt, &tmpRV8803RegisterByte) failed\n");
-		}
-		else
-		{
-			warpPrint("kWarpRV8803RegExt = [0x%X]\n", tmpRV8803RegisterByte);
-		}
-
-		status = readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &tmpRV8803RegisterByte);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegFlag, &tmpRV8803RegisterByte) failed\n");
-		}
-		else
-		{
-			warpPrint("kWarpRV8803RegFlag = [0x%X]\n", tmpRV8803RegisterByte);
-		}
-
-		status = readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &tmpRV8803RegisterByte);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("readRTCRegisterRV8803C7(kWarpRV8803RegCtrl, &tmpRV8803RegisterByte) failed\n");
-		}
-		else
-		{
-			warpPrint("kWarpRV8803RegCtrl = [0x%X]\n", tmpRV8803RegisterByte);
-		}
-
-		while (1)
-		{
-			blinkLED(kGlauxPinLED);
-			for (int i = 0; i < kGlauxSensorRepetitionsPerSleepIteration; i++)
-			{
-				printAllSensors(true /* printHeadersAndCalibration */, true /* hexModeFlag */, 0 /* menuDelayBetweenEachRun */, true /* loopForever */);
-			}
-
-			warpDisableI2Cpins();
-			blinkLED(kGlauxPinLED);
-
-			warpPrint("About to go into VLLS0 for 30 (was 60*60) seconds (will reset afterwords)...\n");
-			status = warpSetLowPowerMode(kWarpPowerModeVLLS0, kGlauxSleepSecondsBetweenSensorRepetitions /* sleep seconds */);
-			if (status != kWarpStatusOK)
-			{
-				warpPrint("warpSetLowPowerMode(kWarpPowerModeVLLS0, 10)() failed...\n");
-			}
-			warpPrint("Should not get here...");
-		}
 	#endif
 
 	devSSD1331init();
