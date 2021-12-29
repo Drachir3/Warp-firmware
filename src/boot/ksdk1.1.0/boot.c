@@ -68,11 +68,6 @@
 #define							kWarpConstantStringErrorSanity		"\rSanity check failed!"
 
 
-#if (WARP_BUILD_ENABLE_DEVIS25xP)
-	#include "devIS25xP.h"
-	volatile WarpSPIDeviceState			deviceIS25xPState;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 	#include "devMMA8451Q.h"
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
@@ -1445,47 +1440,6 @@ main(void)
 	 */
 
 
-	#if (WARP_BUILD_ENABLE_DEVIS25xP && WARP_BUILD_ENABLE_GLAUX_VARIANT)
-		/*
-		 *	Only supported in Glaux.
-		 */
-		initIS25xP(kGlauxPinFlash_SPI_nCS,						kWarpDefaultSupplyVoltageMillivoltsIS25xP	);
-
-		uint8_t	ops1[] = {0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
-		status = spiTransactionIS25xP(ops1, sizeof(ops1)/sizeof(uint8_t) /* opCount */);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("IS25xP: SPI transaction to read JEDEC ID failed...\n");
-		}
-		else
-		{
-			warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
-		}
-
-		uint8_t	ops2[] = {0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
-		status = spiTransactionIS25xP(ops2, sizeof(ops2)/sizeof(uint8_t) /* opCount */);
-		if (status != kWarpStatusOK)
-		{
-			warpPrint("IS25xP: SPI transaction to read Manufacturer ID failed...\n");
-		}
-		else
-		{
-			warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
-		}
-
-		uint8_t	ops3[] = {0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */};
-		status = spiTransactionIS25xP(ops3, sizeof(ops3)/sizeof(uint8_t) /* opCount */);
-				if (status != kWarpStatusOK)
-		{
-			warpPrint("IS25xP: SPI transaction to read Flash ID failed...\n");
-		}
-		else
-		{
-			warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
-		}
-		
-	#endif
-
 	#if (WARP_BUILD_ENABLE_DEVBGX)
 		warpPrint("Configuring BGX Bluetooth.\n");
 		warpPrint("Enabling UART... ");
@@ -1545,20 +1499,6 @@ main(void)
 
 	#if (WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		printBootSplash(gWarpCurrentSupplyVoltage, menuRegisterAddress, &powerManagerCallbackStructure);
-
-		#if (WARP_BUILD_ENABLE_DEVIS25xP)
-			warpPrint("About to read IS25xP JEDEC ID...\n");
-			//spiTransactionIS25xP({0x9F /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-			warpPrint("IS25xP JEDEC ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[1], deviceIS25xPState.spiSinkBuffer[2], deviceIS25xPState.spiSinkBuffer[3]);
-
-			warpPrint("About to read IS25xP Manufacturer ID...\n");
-			//spiTransactionIS25xP({0x90 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-			warpPrint("IS25xP Manufacturer ID = [0x%X] [0x%X] [0x%X]\n", deviceIS25xPState.spiSinkBuffer[3], deviceIS25xPState.spiSinkBuffer[4], deviceIS25xPState.spiSinkBuffer[5]);
-
-			warpPrint("About to read IS25xP Flash ID (also releases low-power mode)...\n");
-			//spiTransactionIS25xP({0xAB /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 5 /* opCount */);
-			warpPrint("IS25xP Flash ID = [0x%X]\n", deviceIS25xPState.spiSinkBuffer[4]);
-		#endif
 
 		warpPrint("About to activate low-power modes (including IS25xP Flash)...\n");
 		activateAllLowPowerSensorModes(true /* verbose */);
@@ -2672,18 +2612,6 @@ powerupAllSensors(void)
 void
 activateAllLowPowerSensorModes(bool verbose)
 {
-	/*
-	 *	IS25XP:	Put in powerdown momde
-	 */
-	#if (WARP_BUILD_ENABLE_DEVIS25xP)
-		/*
-		 *	Put the Flash in deep power-down
-		 */
-		//TODO: move 0xB9 into a named constant
-		//spiTransactionIS25xP({0xB9 /* op0 */,  0x00 /* op1 */,  0x00 /* op2 */, 0x00 /* op3 */, 0x00 /* op4 */, 0x00 /* op5 */, 0x00 /* op6 */}, 1 /* opCount */);
-	#endif
-
-
 
 	/*
 	 *	MMA8451Q: See 0x2B: CTRL_REG2 System Control 2 Register (page 43).
