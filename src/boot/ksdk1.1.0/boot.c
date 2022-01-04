@@ -78,11 +78,6 @@
 	volatile WarpI2CDeviceState			deviceINA219State;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVL3GD20H)
-	#include "devL3GD20H.h"
-	volatile WarpI2CDeviceState			deviceL3GD20HState;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 	#include "devRV8803C7.h"
 	volatile WarpI2CDeviceState			deviceRV8803C7State;
@@ -132,8 +127,6 @@ static void						repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSens
 								int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts,
 								uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte);
 static int						char2int(int character);
-static void						activateAllLowPowerSensorModes(bool verbose);
-static void						powerupAllSensors(void);
 static uint8_t						readHexByte(void);
 static int						read4digits(void);
 static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever);
@@ -1704,16 +1697,6 @@ main(void)
 				break;
 			}
 
-			/*
-			 *	Activate low-power modes in all sensors.
-			 */
-			case 'h':
-			{
-				warpPrint("\r\n\tNOTE: First power sensors and enable I2C\n\n");
-				activateAllLowPowerSensorModes(true /* verbose */);
-
-				break;
-			}
 
 			/*
 			 *	Start repeated read
@@ -1860,15 +1843,6 @@ main(void)
 				break;
 			}
 
-			/*
-			 *	Power up all sensors
-			 */
-			case 's':
-			{
-				warpPrint("\r\n\tNOTE: First power sensors and enable I2C\n\n");
-				powerupAllSensors();
-				break;
-			}
 
 			/*
 			 *	Dump processor state
@@ -1933,6 +1907,8 @@ main(void)
 				warpPrint("\r\n\tSet the time delay between each run in milliseconds (e.g., '1234')> ");
 				uint16_t	menuDelayBetweenEachRun = read4digits();
 				warpPrint("\r\n\tDelay between read batches set to %d milliseconds.\n\n", menuDelayBetweenEachRun);
+				
+				
 				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun, true /* loopForever */);
 
 				/*
@@ -2015,9 +1991,11 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 	numberOfConfigErrors += configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
+					0x02 /* 8g full-scale range, no high-pass filtering */ ,
 					0x01/* Normal read 8bit, 800Hz, normal, active mode */
 					);
 	#endif
+	
 	#if (WARP_BUILD_ENABLE_DEVINA219)
 	uint8_t	payloadConfigMSB, payloadConfigLSB, payloadCalibMSB, payloadCalibLSB;
 	payloadConfigMSB = 0x11;
@@ -2054,6 +2032,8 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 
 		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 			printSensorDataMMA8451Q(hexModeFlag);
+			
+			
 		#endif
 
 		#if (WARP_BUILD_ENABLE_DEVINA219)
@@ -2068,6 +2048,8 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		}
 
 		readingCount++;
+
+	
 	} while (loopForever);
 }
 
@@ -2386,24 +2368,3 @@ writeBytesToSpi(uint8_t *  payloadBytes, int payloadLength)
 }
 
 
-
-void
-powerupAllSensors(void)
-{
-
-}
-
-
-
-void
-activateAllLowPowerSensorModes(bool verbose)
-{
-
-	/*
-	 *	MMA8451Q: See 0x2B: CTRL_REG2 System Control 2 Register (page 43).
-	 *
-	 *	POR state seems to be not too bad.
-	 */
-
-
-}
