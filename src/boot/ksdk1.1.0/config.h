@@ -55,6 +55,7 @@
 	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		1
 	#define		WARP_BUILD_ENABLE_DEVINA219		0
 	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
+	#define		WARP_BUILD_ENABLE_DEVTSI		1
 #else
 	/*
 	 *	Otherwise: Edit these to set which code paths are activated in the firmware compilation

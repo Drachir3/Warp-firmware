@@ -180,4 +180,34 @@ devSSD1331init(void)
 }
 
 int
+drawGraph(void)		// Will likely need to pass in velocity data here as an argument. Remember to update .h too.
+{
 
+	/*	Clear Screen	*/
+	writeCommand(kSSD1331CommandCLEAR);
+	writeCommand(0x00);
+	writeCommand(0x00);
+	writeCommand(0x5F);
+	writeCommand(0x3F);
+
+	/*	Draw axes	*/	
+	writeCommand(kSSD1331CommandDRAWLINE);	// x-axis
+	writeCommand(0);					// Start column
+	writeCommand(63);					// Start row
+	writeCommand(95);					// End column
+	writeCommand(63);					// End row
+	writeCommand(0x00);					// Red
+	writeCommand(0x00);					// Green
+	writeCommand(0xFF);					// Blue
+	writeCommand(kSSD1331CommandDRAWLINE);	// y-axis
+	writeCommand(0x00);					// Start column
+	writeCommand(0x00);					// Start row
+	writeCommand(0x00);					// End column
+	writeCommand(63);					// End row
+	writeCommand(0x00);					// Red
+	writeCommand(0x00);					// Green
+	writeCommand(0xFF);					// Blue
+
+
+	return 0;
+}

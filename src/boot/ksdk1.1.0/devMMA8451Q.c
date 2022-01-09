@@ -61,7 +61,7 @@ extern volatile WarpI2CDeviceState	deviceMMA8451QState;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
 extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
-
+int16_t				sensorData[3] = {0};
 
 
 void
@@ -315,10 +315,9 @@ printSensorDataMMA8451Q(bool hexModeFlag)
 	}
 }
 
-void
+int16_t*
 fetchSensorDataMMA8451Q(void)
 {
-	int16_t	sensorData[3] = {0};
 	uint16_t	readSensorRegisterValueLSB;
 	uint16_t	readSensorRegisterValueMSB;
 	int16_t	readSensorRegisterValueCombined;
