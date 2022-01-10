@@ -3,13 +3,15 @@
 	
 /*
 To do:
-	Calibrate sensor.
+		Calibrate sensor.
 	Button interrupt at end of set, to trigger graph
 	Second interrupt to start new set.
 	Calculate time between first and last measurement.
+	Calculate angle of device
 	Get clip for barbell.
 	Evaluate power consumption and measurement accuracy
-	Write OLED driver part.
+		Write OLED driver part.
+		convert acceleration to m/s/s
 */
 
 #include <math.h>
@@ -34,8 +36,8 @@ while (1)
 	double		vel_z_arr[n_samples] = {0};
 	double		vel_arr[n_samples] = {0};
 
-	double		maxVelocityPositive[50] = {0};
-	double		maxVelocitynegative[50] = {0};		// Probably find a more elegant way to choose the length.
+	double		maxVelocityPos[30] = {0};
+	double		maxVelocityNeg[30] = {0};		// Probably find a more elegant way to choose the length.
 	double		currentMaxVelocityPos = 0;
 	double		currentMaxVelocityNeg = 0;
 	double		thresh = 0.2;					// Need to decide what this should be
@@ -52,11 +54,10 @@ while (1)
 	{
 		sensorData = fetchSensorDataMMA8451Q();	// Similar to printSensorData function
 		
-		// Need to convert accelerometer values to SI units
 		
-		acc_x_arr[index] = sensorData[0] - g_acc[0];
-		acc_y_arr[index] = sensorData[1] - g_acc[1];
-		acc_z_arr[index] = sensorData[2] - g_acc[2];
+		acc_x_arr[index] = (sensorData[0] - g_acc[0])*(9.81/1024);
+		acc_y_arr[index] = (sensorData[1] - g_acc[1])*(9.81/1024);
+		acc_z_arr[index] = (sensorData[2] - g_acc[2])*(9.81/1024);
 		
 		index++;
 		
@@ -86,22 +87,40 @@ while (1)
 	// Process to identify max velocities
 	for(int i=0; i < n_samples; i++)
 	{
+		int pos_index = 0;
+		int neg_index = 0;
 		if((vel_arr[i] > currentMaxVelocityPos) & (vel_arr[i] > thresh))
 			{
+				if(isPos == 0)
+				{
+					maxVelocityPos[pos_index] = currentMaxVelocityPos;
+					pos_index++;
+					isPos=1;
+				}
 				currentMaxVelocityPos = vel_arr[i]
 				
 			}
 			
 		else if((vel_arr[i] < currentMaxVelocityNeg) & (vel_arr[i] < -thresh))
 			{
+				if(isPos == 1)
+				{
+					maxVelocityNeg[neg_index] = currentMaxVelocityNeg;
+					neg_index++;
+					isPos=0;
+				}
 				currentMaxVelocityNeg = vel_arr[i]
 			}
+		// Need the lengths of each (indices) for drawGraph below
 	}	
 
 
 
 	// Display graph or numbers on OLED
-	drawGraph();
+	double velocity[] = {95.6,104.3,96,72,43.8,34.23};
+				
+	drawGraph(velocity,6);			
+	break;
 
 	// Interrupt to restart set
 	while(1)

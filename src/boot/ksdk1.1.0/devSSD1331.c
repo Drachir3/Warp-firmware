@@ -180,7 +180,7 @@ devSSD1331init(void)
 }
 
 int
-drawGraph(void)		// Will likely need to pass in velocity data here as an argument. Remember to update .h too.
+drawGraph(double velocity[], int num_points)		// Will likely need to pass in velocity data here as an argument. Remember to update .h too.
 {
 
 	/*	Clear Screen	*/
@@ -208,6 +208,31 @@ drawGraph(void)		// Will likely need to pass in velocity data here as an argumen
 	writeCommand(0x00);					// Green
 	writeCommand(0xFF);					// Blue
 
-
+		
+	int hor_scale_factor = 95/(num_points-1);	
+	double max_value = 0;
+	for(int i=0;i<num_points;i++)
+	{
+		if(velocity[i]>max_value)
+		{
+			max_value = velocity[i];
+		}
+	}
+	
+	double vert_sf = 63/max_value;
+	
+	for(int i=0;i<num_points;i++)
+	{
+		writeCommand(kSSD1331CommandDRAWLINE);
+		writeCommand(i*hor_scale_factor);			// Start column
+		writeCommand((int)63-vert_sf*velocity[i]);		// Start row
+		writeCommand(i*hor_scale_factor);			// End column
+		writeCommand((int)63-vert_sf*velocity[i]);		// End row
+		writeCommand(0xFF);					// Red
+		writeCommand(0x00);					// Green
+		writeCommand(0x00);					// Blue
+		
+	}
+	
 	return 0;
 }

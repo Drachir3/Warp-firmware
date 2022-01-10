@@ -64,14 +64,7 @@ extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 int16_t				sensorData[3] = {0};
 
 
-void
-initMMA8451Q(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
-{
-	deviceMMA8451QState.i2cAddress			= i2cAddress;
-	deviceMMA8451QState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
-	return;
-}
 
 WarpStatus
 writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload)
@@ -125,6 +118,21 @@ writeSensorRegisterMMA8451Q(uint8_t deviceRegister, uint8_t payload)
 	}
 
 	return kWarpStatusOK;
+}
+
+void
+initMMA8451Q(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
+{
+	deviceMMA8451QState.i2cAddress			= i2cAddress;
+	deviceMMA8451QState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
+
+	writeSensorRegisterMMA8451Q(0x2A, 0x00);	// Put sensor in standby mode
+	writeSensorRegisterMMA8451Q(0x2F, 0x05);	// Calibrating x-offset
+	writeSensorRegisterMMA8451Q(0x30, 0x00);	// Calibrating y-offset
+	writeSensorRegisterMMA8451Q(0x31, 0xF4);	// Calibrating z-offset
+	writeSensorRegisterMMA8451Q(0x2A, 0x01);	// Put sensor in active mode
+	
+	return;
 }
 
 WarpStatus

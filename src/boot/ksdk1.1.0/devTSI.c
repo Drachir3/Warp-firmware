@@ -5,8 +5,8 @@
  */
 #include "config.h"
 
-#include "fsl_spi_master_driver.h"
 #include "fsl_port_hal.h"
+#include "fsl_hwtimer.h"
 
 #include "SEGGER_RTT.h"
 #include "gpio_pins.h"
@@ -66,17 +66,34 @@ printSensorDataTSI(void)
 	warpPrint(" %d, %d,", TSIpinA, TSIpinB);
 }
 
-bool
-touchDetector(void)
+/*bool
+touchDetector(void)		// Clock loops after 32768
 {
-	// Start hardware timer
+	uint32_t	sensorReadA;
+	uint32_t	sensorReadB;
+	uint32_t	clockStart;
+	uint32_t	clockEnd;
+	
+	HWTIMER_SYS_Start();
 	
 	GPIO_DRV_SetPinDir(PTB,6,0);	// Setting PTB6 and 7 to input (high impedance) mode.
 	GPIO_DRV_SetPinDir(PTB,7,0);
 	
+	if(sensorReadA || sensorReadB == 1)
+	{
+		warpPrint("Bits not set to 0 properly");
+		break;
+	}
+	
 	while(timer < t_max)
 	{
-		
+		sensorReadA = readSensorTSI(kTSIPinA);
+		sensorReadB = readSensorTSI(kTSIPinB);
+		if(sensorReadA || sensorReadB == 1)
+		{
+			HWTIMER_SYS_Stop;
+			break;
+		}
 	}
 	return 0;
-}
+}*/

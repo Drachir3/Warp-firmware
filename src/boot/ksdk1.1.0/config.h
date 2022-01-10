@@ -36,10 +36,7 @@
 */
 
 #define		WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF		1
-#define		WARP_BUILD_BOOT_TO_CSVSTREAM			0
 #define		WARP_BUILD_BOOT_TO_VLPR				1
-#define		WARP_BUILD_DISABLE_SUPPLIES_BY_DEFAULT		0
-
 
 
 /*
@@ -50,20 +47,10 @@
 #define		WARP_BUILD_ENABLE_FRDMKL03			1
 
 
-#if (WARP_BUILD_ENABLE_FRDMKL03)
-	#define		WARP_BUILD_ENABLE_DEVBGX		0
-	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		1
-	#define		WARP_BUILD_ENABLE_DEVINA219		0
-	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
-	#define		WARP_BUILD_ENABLE_DEVTSI		1
-#else
-	/*
-	 *	Otherwise: Edit these to set which code paths are activated in the firmware compilation
-	 */
-	#define		WARP_BUILD_ENABLE_DEVBGX		1
-	#define		WARP_BUILD_ENABLE_DEVMMA8451Q		0
-	#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
-#endif
+#define		WARP_BUILD_ENABLE_DEVMMA8451Q		1
+#define		WARP_BUILD_ENABLE_DEVINA219		0
+#define		WARP_BUILD_ENABLE_DEVRV8803C7		0
+
 
 typedef enum
 {
@@ -97,7 +84,6 @@ typedef enum
 	 *	Voltages
 	 */
 	kWarpDefaultSupplyVoltageMillivolts			= 1800,
-	kWarpDefaultSupplyVoltageMillivoltsBGX			= 3300,
 	kWarpDefaultSupplyVoltageMillivoltsMMA8451Q		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsINA219		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsRV8803C7		= 1800,

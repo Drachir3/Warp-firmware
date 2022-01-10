@@ -27,7 +27,6 @@ typedef enum
 	kSSD1331CommandNORMALDISPLAY	= 0xA4,
 	kSSD1331CommandDISPLAYALLON	= 0xA5,
 	kSSD1331CommandDISPLAYALLOFF	= 0xA6,
-	kSSD1331CommandINVERTDISPLAY	= 0xA7,
 	kSSD1331CommandSETMULTIPLEX	= 0xA8,
 	kSSD1331CommandSETMASTER	= 0xAD,
 	kSSD1331CommandDISPLAYOFF	= 0xAE,
@@ -43,4 +42,4 @@ typedef enum
 } SSD1331Commands;
 
 int	devSSD1331init(void);
-int 	drawGraph(void);
+int 	drawGraph(double velocity[], int num_points);
