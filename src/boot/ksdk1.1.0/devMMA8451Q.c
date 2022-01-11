@@ -61,9 +61,6 @@ extern volatile WarpI2CDeviceState	deviceMMA8451QState;
 extern volatile uint32_t		gWarpI2cBaudRateKbps;
 extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
-int16_t				sensorData[3] = {0};
-
-
 
 
 WarpStatus
@@ -323,35 +320,23 @@ printSensorDataMMA8451Q(bool hexModeFlag)
 	}
 }
 
-int16_t*
+int32_t
 fetchSensorDataMMA8451Q(void)
 {
 	uint16_t	readSensorRegisterValueLSB;
 	uint16_t	readSensorRegisterValueMSB;
 	int16_t	readSensorRegisterValueCombined;
 	WarpStatus	i2cReadStatus;
+	int32_t	sensorData;
 
 
 	warpScaleSupplyVoltage(deviceMMA8451QState.operatingVoltageMillivolts);
-	
-	i2cReadStatus = readSensorRegisterMMA8451Q(kWarpSensorOutputRegisterMMA8451QOUT_X_MSB, 2 /* numberOfBytes */);
-	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
-	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
-	sensorData[0] = (readSensorRegisterValueCombined ^ (1 << 13)) - (1 << 13);
-
-	i2cReadStatus = readSensorRegisterMMA8451Q(kWarpSensorOutputRegisterMMA8451QOUT_Y_MSB, 2 /* numberOfBytes */);
-	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
-	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[1];
-	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
-	sensorData[1] = (readSensorRegisterValueCombined ^ (1 << 13)) - (1 << 13);
-
-	
+		
 	i2cReadStatus = readSensorRegisterMMA8451Q(kWarpSensorOutputRegisterMMA8451QOUT_Z_MSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
-	sensorData[2] = (readSensorRegisterValueCombined ^ (1 << 13)) - (1 << 13);
+	sensorData = (readSensorRegisterValueCombined ^ (1 << 13)) - (1 << 13);
 
 	return sensorData;
 }

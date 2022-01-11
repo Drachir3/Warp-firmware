@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <math.h>
 
 /*
  *	config.h needs to come first
@@ -62,7 +63,7 @@
 #include "SEGGER_RTT.h"
 
 #include "devSSD1331.h"
-#include "devTSI.h"
+
 
 #define							kWarpConstantStringI2cFailure		"\rI2C failed, reg 0x%02x, code %d\n"
 #define							kWarpConstantStringErrorInvalidVoltage	"\rInvalid supply voltage [%d] mV!"
@@ -113,7 +114,6 @@ uint8_t							gWarpSpiCommonSourceBuffer[kWarpMemoryCommonSpiBufferBytes];
 uint8_t							gWarpSpiCommonSinkBuffer[kWarpMemoryCommonSpiBufferBytes];
 
 static void						lowPowerPinStates(void);
-static void						disableTPS62740(void);
 static void						enableTPS62740(uint16_t voltageMillivolts);
 static void						dumpProcessorState(void);
 static void						repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress,
@@ -421,13 +421,6 @@ lowPowerPinStates(void)
 	PORT_HAL_SetMuxMode(PORTB_BASE, 13, kPortPinDisabled);
 }
 
-
-
-void
-disableTPS62740(void)
-{
-	GPIO_DRV_ClearPinOutput(kWarpPinTPS62740_REGCTRL);
-}
 
 void
 enableTPS62740(uint16_t voltageMillivolts)
@@ -853,7 +846,7 @@ main(void)
 
 
 	devSSD1331init();
-	devTSIinit();
+
 
 	while (1)
 	{
@@ -864,9 +857,6 @@ main(void)
 		 */
 
 		warpPrint("\rSelect:\n");
-		warpPrint("\r- 'a': set default sensor.\n");
-		warpPrint("\r- 'e': set default register address.\n");
-		warpPrint("\r- 'i': set pull-up enable value.\n");
 		warpPrint("\r- 'j': repeat read reg 0x%02x on sensor #%d.\n", menuRegisterAddress, menuTargetSensor);
 		warpPrint("\r- 't': dump processor state.\n");
 
@@ -878,72 +868,6 @@ main(void)
 
 		switch (key)
 		{
-			/*
-			 *		Select sensor
-			 */
-			case 'a':
-			{
-				warpPrint("\r\tSelect:\n");
-
-
-				#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-					warpPrint("\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V\n");
-				#else
-					warpPrint("\r\t- '5' MMA8451Q			(0x00--0x31): 1.95V -- 3.6V (compiled out) \n");
-				#endif
-
-				#if (WARP_BUILD_ENABLE_DEVINA219)
-					warpPrint("\r\t- 'l' INA219			(0x00--0x05): 3.0V -- 5.5V\n");
-				#else
-					warpPrint("\r\t- 'l' INA219			(0x00--0x05): 3.0V -- 5.5V (compiled out) \n");
-				#endif
-
-				warpPrint("\r\tEnter selection> ");
-				key = warpWaitKey();
-
-				switch(key)
-				{
-
-
-					#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-						case '5':
-						{
-							menuTargetSensor = kWarpSensorMMA8451Q;
-							menuI2cDevice = &deviceMMA8451QState;
-							break;
-						}
-					#endif
-
-
-#if (WARP_BUILD_ENABLE_DEVINA219)
-					case 'l':
-					{
-						menuTargetSensor = kWarpSensorINA219;
-						menuI2cDevice = &deviceINA219State;
-						break;
-					}
-#endif
-					default:
-					{
-						warpPrint("\r\tInvalid selection '%c' !\n", key);
-					}
-				}
-
-				break;
-			}
-
-
-			/*
-			 *	Set register address for subsequent operations
-			 */
-			case 'e':
-			{
-				warpPrint("\r\n\tEnter 2-nybble register hex address (e.g., '3e')> ");
-				menuRegisterAddress = readHexByte();
-				warpPrint("\r\n\tEntered [0x%02x].\n\n", menuRegisterAddress);
-
-				break;
-			}
 
 
 			/*
@@ -1008,6 +932,91 @@ main(void)
 			/*	CW 5, so far	*/
 			case 'y':
 			{
+				double 	dt = 1/800;   // May need to change this to vary with the gap between reads, could work out total time and divide by n_samples to get dt.
+				int		time = 0;
+				double		v0 = 0;
+				int		n_samples = 100;
+				int		index = 0;
+
+				int32_t	sensorData;
+				int32_t	g_acc;
+
+
+				double		acc_z_arr[100] = {0};
+
+				double		vel_z_arr[100] = {0};
+
+				double		maxVelocityPos[30] = {0};
+				double		maxVelocityNeg[30] = {0};
+				double		currentMaxVelocityPos = 0;
+				double		currentMaxVelocityNeg = 0;
+				double		thresh = 0.2;					// Need to decide what this should be
+				bool		isPos = 1;
+				
+				g_acc = fetchSensorDataMMA8451Q();			// Offsets due to gravity, to be removed from later readings. 
+
+
+				while(index < n_samples)				// Maybe a for loop if outside warp menu, but no need otherwise.
+				{
+					sensorData = fetchSensorDataMMA8451Q();
+
+					acc_z_arr[index] = (sensorData - g_acc)*(9.81/1024);
+					
+					index++;
+					
+					/*if(user input)
+					{
+						break;
+					}*/
+				}
+
+				n_samples = index;
+				index = 0;
+
+
+				for(int i=0;i< n_samples-1;i++)
+				{
+
+					vel_z_arr[i+1] = vel_z_arr[i] + acc_z_arr[i]*dt;
+					
+					// Use angle instead, so velocity isn't a magnitude
+					
+				}
+
+				// Process to identify max velocities
+				for(int i=0; i < n_samples; i++)
+				{
+					int pos_index = 0;
+					int neg_index = 0;
+					if((vel_z_arr[i] > currentMaxVelocityPos) & (vel_z_arr[i] > thresh))
+						{
+							if(isPos == 0)
+							{
+								maxVelocityPos[pos_index] = currentMaxVelocityPos;
+								pos_index++;
+								isPos=1;
+							}
+							currentMaxVelocityPos = vel_z_arr[i];
+							
+						}
+						
+					else if((vel_z_arr[i] < currentMaxVelocityNeg) & (vel_z_arr[i] < -thresh))
+						{
+							if(isPos == 1)
+							{
+								maxVelocityNeg[neg_index] = currentMaxVelocityNeg;
+								neg_index++;
+								isPos=0;
+							}
+							currentMaxVelocityNeg = vel_z_arr[i];
+						}
+					// Need the lengths of each (indices) for drawGraph below
+				}	
+
+
+
+				// Display graph or numbers on OLED
+				
 				double velocity[] = {95.6,104.3,96,72,43.8,34.23};
 				
 				drawGraph(velocity,6);
@@ -1104,8 +1113,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		#if (WARP_BUILD_ENABLE_DEVINA219)
 			warpPrint(" INA219 load current, INA219 Shunt Voltage, INA219 Bus Voltage");
 		#endif
-		
-		warpPrint(" TSI A, TSI B,");
 
 		warpPrint(" RTC->TSR, RTC->TPR, # Config Errors");
 		warpPrint("\n\n");
@@ -1125,8 +1132,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		#if (WARP_BUILD_ENABLE_DEVINA219)
 			printSensorDataINA219(hexModeFlag);		// Prints the contents of the current register 0x04
 		#endif
-		
-		printSensorDataTSI();
+
 		
 		warpPrint(" %12d, %6d, %2u\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
 
