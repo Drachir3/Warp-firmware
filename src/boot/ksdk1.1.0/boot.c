@@ -40,7 +40,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <math.h>
 
 /*
  *	config.h needs to come first
@@ -583,7 +582,6 @@ main(void)
 	WarpStatus				status;
 	uint8_t				key;
 	WarpSensorDevice			menuTargetSensor		= kWarpSensorMMA8451Q;
-	volatile WarpI2CDeviceState *		menuI2cDevice			= NULL;
 	uint8_t					menuRegisterAddress		= 0x00;
 	rtc_datetime_t				warpBootDate;
 	power_manager_user_config_t		warpPowerModeWaitConfig;
@@ -932,94 +930,88 @@ main(void)
 			/*	CW 5, so far	*/
 			case 'y':
 			{
-				double 	dt = 1/800;   // May need to change this to vary with the gap between reads, could work out total time and divide by n_samples to get dt.
-				int		time = 0;
-				double		v0 = 0;
-				int		n_samples = 100;
-				int		index = 0;
+				double 	dt = 0;   // May need to change this to vary with the gap between reads, could work out total time and divide by n_samples to get dt.
+				uint32_t	time_start, time_dif;
+				int16_t	n_samples = 25;	// 16 bits gives up to 65535
+				int8_t		index = 0;
 
-				int32_t	sensorData;
-				int32_t	g_acc;
+				int16_t	g_acc;
 
 
-				double		acc_z_arr[100] = {0};
+				int16_t	acc_z_arr[25] = {0};
 
-				double		vel_z_arr[100] = {0};
+				double		vel_z_arr[25] = {0};
 
-				double		maxVelocityPos[30] = {0};
-				double		maxVelocityNeg[30] = {0};
-				double		currentMaxVelocityPos = 0;
-				double		currentMaxVelocityNeg = 0;
-				double		thresh = 0.2;					// Need to decide what this should be
-				bool		isPos = 1;
+				double		maxVelocity[20] = {0};
+				double		currentMaxVelocity = 0;
+				int16_t	thresh = 25;					// Need to decide what this should be
+				bool		isPos = 0;
 				
 				g_acc = fetchSensorDataMMA8451Q();			// Offsets due to gravity, to be removed from later readings. 
 
-
-				while(index < n_samples)				// Maybe a for loop if outside warp menu, but no need otherwise.
-				{
-					sensorData = fetchSensorDataMMA8451Q();
-
-					acc_z_arr[index] = (sensorData - g_acc)*(9.81/1024);
+				for(int16_t j=0;j<300;j++)
+				{	
+					time_start = OSA_TimeGetMsec();
 					
-					index++;
+					for(uint16_t i=0;i < n_samples;i++)
+					{
+						acc_z_arr[i] = fetchSensorDataMMA8451Q() - g_acc;
+					}
+					time_dif = OSA_TimeGetMsec() - time_start;
+					dt = time_dif/n_samples;
 					
+
+					for(int8_t i=0;i< n_samples-1;i++)
+					{
+						vel_z_arr[i+1] = vel_z_arr[i] + acc_z_arr[i]*dt;
+		
+						// Use angle instead, so velocity isn't a magnitude
+					}
+
+
+					/* Process to identify max velocities */
+					for(int8_t i=0; i < n_samples; i++)
+					{
+						if((vel_z_arr[i] > currentMaxVelocity) & (vel_z_arr[i] > thresh))
+							{
+								if(isPos == 0)
+								{
+									maxVelocity[index] = currentMaxVelocity;
+									index++;
+									isPos=1;
+								}
+								currentMaxVelocity = vel_z_arr[i];
+								
+							}
+							
+						else if(vel_z_arr[i] < 0)
+							{
+								if(isPos == 1)
+								{
+									isPos=0;
+								}
+							}
+
+					}
+						
 					/*if(user input)
 					{
 						break;
 					}*/
-				}
-
-				n_samples = index;
-				index = 0;
-
-
-				for(int i=0;i< n_samples-1;i++)
-				{
-
-					vel_z_arr[i+1] = vel_z_arr[i] + acc_z_arr[i]*dt;
-					
-					// Use angle instead, so velocity isn't a magnitude
-					
-				}
-
-				// Process to identify max velocities
-				for(int i=0; i < n_samples; i++)
-				{
-					int pos_index = 0;
-					int neg_index = 0;
-					if((vel_z_arr[i] > currentMaxVelocityPos) & (vel_z_arr[i] > thresh))
-						{
-							if(isPos == 0)
-							{
-								maxVelocityPos[pos_index] = currentMaxVelocityPos;
-								pos_index++;
-								isPos=1;
-							}
-							currentMaxVelocityPos = vel_z_arr[i];
-							
-						}
-						
-					else if((vel_z_arr[i] < currentMaxVelocityNeg) & (vel_z_arr[i] < -thresh))
-						{
-							if(isPos == 1)
-							{
-								maxVelocityNeg[neg_index] = currentMaxVelocityNeg;
-								neg_index++;
-								isPos=0;
-							}
-							currentMaxVelocityNeg = vel_z_arr[i];
-						}
-					// Need the lengths of each (indices) for drawGraph below
-				}	
-
-
-
-				// Display graph or numbers on OLED
 				
-				double velocity[] = {95.6,104.3,96,72,43.8,34.23};
+				}
 				
-				drawGraph(velocity,6);
+				for(uint16_t i=0;i<n_samples;i++)
+				{
+					warpPrint("\n%d,",acc_z_arr[i]);
+				}
+				
+
+				/* Display graph or numbers on OLED */
+				
+				//double velocity[] = {95.6,104.3,96,72,43.8,34.23};
+				
+				drawGraph(maxVelocity,index);
 				
 				break;
 			}

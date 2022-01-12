@@ -126,7 +126,9 @@ initMMA8451Q(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 	writeSensorRegisterMMA8451Q(0x2A, 0x00);	// Put sensor in standby mode
 	writeSensorRegisterMMA8451Q(0x2F, 0x05);	// Calibrating x-offset
 	writeSensorRegisterMMA8451Q(0x30, 0x00);	// Calibrating y-offset
-	writeSensorRegisterMMA8451Q(0x31, 0xF4);	// Calibrating z-offset
+	writeSensorRegisterMMA8451Q(0x31, 0x06);	// Calibrating z-offset
+	writeSensorRegisterMMA8451Q(0x09, 0x00);
+	writeSensorRegisterMMA8451Q(0x0E, 0x02);
 	writeSensorRegisterMMA8451Q(0x2A, 0x01);	// Put sensor in active mode
 	
 	return;
@@ -326,13 +328,12 @@ fetchSensorDataMMA8451Q(void)
 	uint16_t	readSensorRegisterValueLSB;
 	uint16_t	readSensorRegisterValueMSB;
 	int16_t	readSensorRegisterValueCombined;
-	WarpStatus	i2cReadStatus;
-	int32_t	sensorData;
+	int16_t	sensorData;
 
 
 	warpScaleSupplyVoltage(deviceMMA8451QState.operatingVoltageMillivolts);
 		
-	i2cReadStatus = readSensorRegisterMMA8451Q(kWarpSensorOutputRegisterMMA8451QOUT_Z_MSB, 2 /* numberOfBytes */);
+	readSensorRegisterMMA8451Q(kWarpSensorOutputRegisterMMA8451QOUT_Z_MSB, 2 /* numberOfBytes */);
 	readSensorRegisterValueMSB = deviceMMA8451QState.i2cBuffer[0];
 	readSensorRegisterValueLSB = deviceMMA8451QState.i2cBuffer[1];
 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
