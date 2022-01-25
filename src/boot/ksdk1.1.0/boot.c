@@ -623,12 +623,6 @@ main(void)
 	SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_NO_BLOCK_TRIM);
 
 
-	warpPrint("\n\n\n\rBooting Warp, in 3... ");
-	OSA_TimeDelay(1000);
-	warpPrint("2... ");
-	OSA_TimeDelay(1000);
-	warpPrint("1...\n\n\n\r");
-	OSA_TimeDelay(1000);
 
 	/*
 	 *	Configure Clock Manager to default, and set callback for Clock Manager mode transition.
@@ -699,13 +693,7 @@ main(void)
 	 */
 	if (WARP_BUILD_BOOT_TO_VLPR)
 	{
-		warpPrint("About to switch CPU to VLPR mode... ");
 		status = warpSetLowPowerMode(kWarpPowerModeVLPR, 0 /* Sleep Seconds */);
-		if ((status != kWarpStatusOK) && (status != kWarpStatusPowerTransitionErrorVlpr2Vlpr))
-		{
-			warpPrint("warpSetLowPowerMode(kWarpPowerModeVLPR() failed...\n");
-		}
-		warpPrint("done.\n\r");
 	}
 
 	/*
@@ -714,9 +702,8 @@ main(void)
 	 *
 	 *	See also Section 30.3.3 GPIO Initialization of KSDK13APIRM.pdf
 	 */
-	warpPrint("About to GPIO_DRV_Init()... ");
+
 	GPIO_DRV_Init(inputPins  /* input pins */, outputPins  /* output pins */);
-	warpPrint("done.\n");
 
 	/*
 	 *	Make sure the SWD pins, PTA0/1/2 SWD pins in their ALT3 state (i.e., as SWD).
@@ -731,9 +718,8 @@ main(void)
 	 *	Note that it is lowPowerPinStates() that sets the pin mux mode,
 	 *	so until we call it pins are in their default state.
 	 */
-	warpPrint("About to lowPowerPinStates()... ");
+	 
 	lowPowerPinStates();
-	warpPrint("done.\n");
 
 	/*
 	 *	Toggle LED3 (kWarpPinSI4705_nRST on Warp revB, kGlauxPinLED on Glaux)
@@ -950,21 +936,12 @@ main(void)
 					pinOutput = GPIO_DRV_ReadPinInput(kWarpPinSW3_NMI);
 					if(pinOutput == 0)
 					{
+						maxVelocity[index] = currentMaxVelocity;
+						index += 1;
 						break;
 					}
 				}
 				
-
-				
-				warpPrint("dt = %d",(int)(1000*dt));
-				
-				warpPrint("\nMax Velocities:");
-				
-				for(int8_t i=0;i<index;i++)
-				{
-					warpPrint("\n%d,",(int)(1000*maxVelocity[i]));
-				}
-				warpPrint("\n Current Max Velocity: %d", currentMaxVelocity);
 
 				/* Display graph on OLED */
 				drawGraph(maxVelocity,index);
