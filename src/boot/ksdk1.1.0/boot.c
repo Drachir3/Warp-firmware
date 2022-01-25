@@ -114,13 +114,6 @@ uint8_t							gWarpSpiCommonSinkBuffer[kWarpMemoryCommonSpiBufferBytes];
 
 static void						lowPowerPinStates(void);
 static void						enableTPS62740(uint16_t voltageMillivolts);
-static void						dumpProcessorState(void);
-static void						repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress,
-								bool autoIncrement, int chunkReadsPerAddress, bool chatty,
-								int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts,
-								uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte);
-static int						char2int(int character);
-static uint8_t						readHexByte(void);
 static int						read4digits(void);
 static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever);
 
@@ -468,30 +461,6 @@ warpScaleSupplyVoltage(uint16_t voltageMillivolts)
 	#endif
 }
 
-
-void
-dumpProcessorState(void)
-{
-	uint32_t	cpuClockFrequency;
-
-	CLOCK_SYS_GetFreq(kCoreClock, &cpuClockFrequency);
-	warpPrint("\r\n\n\tCPU @ %u KHz\n", (cpuClockFrequency / 1000));
-	warpPrint("\r\tCPU power mode: %u\n", POWER_SYS_GetCurrentMode());
-	warpPrint("\r\tCPU clock manager configuration: %u\n", CLOCK_SYS_GetCurrentConfiguration());
-	warpPrint("\r\tRTC clock: %d\n", CLOCK_SYS_GetRtcGateCmd(0));
-	warpPrint("\r\tSPI clock: %d\n", CLOCK_SYS_GetSpiGateCmd(0));
-	warpPrint("\r\tI2C clock: %d\n", CLOCK_SYS_GetI2cGateCmd(0));
-	warpPrint("\r\tLPUART clock: %d\n", CLOCK_SYS_GetLpuartGateCmd(0));
-	warpPrint("\r\tPORT A clock: %d\n", CLOCK_SYS_GetPortGateCmd(0));
-	warpPrint("\r\tPORT B clock: %d\n", CLOCK_SYS_GetPortGateCmd(1));
-	warpPrint("\r\tFTF clock: %d\n", CLOCK_SYS_GetFtfGateCmd(0));
-	warpPrint("\r\tADC clock: %d\n", CLOCK_SYS_GetAdcGateCmd(0));
-	warpPrint("\r\tCMP clock: %d\n", CLOCK_SYS_GetCmpGateCmd(0));
-	warpPrint("\r\tVREF clock: %d\n", CLOCK_SYS_GetVrefGateCmd(0));
-	warpPrint("\r\tTPM clock: %d\n", CLOCK_SYS_GetTpmGateCmd(0));
-}
-
-
 void
 warpPrint(const char *fmt, ...)
 {
@@ -581,8 +550,6 @@ main(void)
 {
 	WarpStatus				status;
 	uint8_t				key;
-	WarpSensorDevice			menuTargetSensor		= kWarpSensorMMA8451Q;
-	uint8_t					menuRegisterAddress		= 0x00;
 	rtc_datetime_t				warpBootDate;
 	power_manager_user_config_t		warpPowerModeWaitConfig;
 	power_manager_user_config_t		warpPowerModeStopConfig;
@@ -855,8 +822,6 @@ main(void)
 		 */
 
 		warpPrint("\rSelect:\n");
-		warpPrint("\r- 'j': repeat read reg 0x%02x on sensor #%d.\n", menuRegisterAddress, menuTargetSensor);
-		warpPrint("\r- 't': dump processor state.\n");
 
 		warpPrint("\r- 'y': my functionality.\n");
 		warpPrint("\r- 'z': perpetually dump all sensor data.\n");
@@ -868,86 +833,34 @@ main(void)
 		{
 
 
-			/*
-			 *	Start repeated read
-			 */
-			case 'j':
-			{
-				bool		autoIncrement, chatty;
-				int		spinDelay, repetitionsPerAddress, chunkReadsPerAddress;
-				int		adaptiveSssupplyMaxMillivolts;
-				uint8_t		referenceByte;
-
-				warpPrint("\r\n\tAuto-increment from base address 0x%02x? ['0' | '1']> ", menuRegisterAddress);
-				autoIncrement = warpWaitKey() - '0';
-
-				warpPrint("\r\n\tChunk reads per address (e.g., '1')> ");
-				chunkReadsPerAddress = warpWaitKey() - '0';
-
-				warpPrint("\r\n\tChatty? ['0' | '1']> ");
-				chatty = warpWaitKey() - '0';
-
-				warpPrint("\r\n\tInter-operation spin delay in milliseconds (e.g., '0000')> ");
-				spinDelay = read4digits();
-
-				warpPrint("\r\n\tRepetitions per address (e.g., '0000')> ");
-				repetitionsPerAddress = read4digits();
-
-				warpPrint("\r\n\tMaximum voltage for adaptive supply (e.g., '0000')> ");
-				adaptiveSssupplyMaxMillivolts = read4digits();
-
-				warpPrint("\r\n\tReference byte for comparisons (e.g., '3e')> ");
-				referenceByte = readHexByte();
-
-				warpPrint("\r\n\tRepeating dev%d @ 0x%02x, reps=%d, pull=%d, delay=%dms:\n\n",
-					menuTargetSensor, menuRegisterAddress, repetitionsPerAddress, spinDelay);
-
-				repeatRegisterReadForDeviceAndAddress(	menuTargetSensor /*warpSensorDevice*/,
-									menuRegisterAddress /*baseAddress */,
-									autoIncrement /*autoIncrement*/,
-									chunkReadsPerAddress,
-									chatty,
-									spinDelay,
-									repetitionsPerAddress,
-									gWarpCurrentSupplyVoltage,
-									adaptiveSssupplyMaxMillivolts,
-									referenceByte
-								);
-
-				break;
-			}
-
-			/*
-			 *	Dump processor state
-			 */
-			case 't':
-			{
-				dumpProcessorState();
-				break;
-			}
-
 			
 			/*	CW 5, so far	*/
 			case 'y':
 			{
-				double 	dt = 0;   // May need to change this to vary with the gap between reads, could work out total time and divide by n_samples to get dt.
+				float 	dt = 0;   // May need to change this to vary with the gap between reads, could work out total time and divide by n_samples to get dt.
 				uint32_t	time_start, time_dif;
-				int16_t	n_samples = 25;	// 16 bits gives up to 65535
+				int16_t	n_samples = 15;	// 16 bits gives up to 65535
 				int8_t		index = 0;
 
-				int16_t	g_acc;
+				int16_t	g_acc = 0;
 
+				int16_t	acc_z_arr[15] = {0};
+				float		acc_smoothed[15] = {0};
+				float		vel_z_arr[15] = {0};
+				float		last_vel = 0;
+				int8_t		stationary = 0;
 
-				int16_t	acc_z_arr[25] = {0};
-
-				double		vel_z_arr[25] = {0};
-
-				double		maxVelocity[20] = {0};
-				double		currentMaxVelocity = 0;
-				int16_t	thresh = 25;					// Need to decide what this should be
+				float		maxVelocity[14] = {0};
+				float		currentMaxVelocity = 0;
+				float		thresh = 0.1;					// Need to decide what this should be
 				bool		isPos = 0;
 				
-				g_acc = fetchSensorDataMMA8451Q();			// Offsets due to gravity, to be removed from later readings. 
+				/* Offsets due to gravity, to be removed from later readings. */ 
+
+				for(int8_t i=0;i<10;i++)
+				{
+					g_acc += (int) (0.1*fetchSensorDataMMA8451Q());
+				} 
 
 				for(int16_t j=0;j<300;j++)
 				{	
@@ -960,56 +873,105 @@ main(void)
 					time_dif = OSA_TimeGetMsec() - time_start;
 					dt = time_dif/n_samples;
 					
+					
+					/* Smooth acceleration data */
+					
+					for(int8_t i=1;i<n_samples-2;i++)
+					{
+						acc_smoothed[i] = 9.81*(acc_z_arr[i-1] + acc_z_arr[i] + acc_z_arr[i+1])/(3*2056);
+					}
+					acc_smoothed[0] = 9.81*(acc_z_arr[0] + acc_z_arr[1])/(2*2056);
+					acc_smoothed[n_samples-1] = 9.81*(acc_z_arr[n_samples-1] + acc_z_arr[n_samples-2])/(2*2056);
 
+					vel_z_arr[0] = last_vel;
 					for(int8_t i=0;i< n_samples-1;i++)
 					{
-						vel_z_arr[i+1] = vel_z_arr[i] + acc_z_arr[i]*dt;
-		
-						// Use angle instead, so velocity isn't a magnitude
+						vel_z_arr[i+1] = vel_z_arr[i] + acc_smoothed[i]*dt/1000;
 					}
-
+					
+					/* Identify when velocity should be 0, and reset */
+					
+					if( ((vel_z_arr[n_samples-1] - last_vel) < 1) & ((vel_z_arr[n_samples-1] - last_vel) > -1))		// Not using fabs, to avoid importing math
+					{
+						if(stationary > 2)				// May need to update this when warpPrint statements are removed, because these add in their own delays
+						{
+							last_vel = 0;
+							stationary = 0;
+						}
+						else
+						{
+							last_vel = vel_z_arr[n_samples-1];
+							stationary += 1;
+						}
+					}
+					else
+					{
+						last_vel = vel_z_arr[n_samples-1];
+						stationary = 0;
+					}
+					
+					
 
 					/* Process to identify max velocities */
 					for(int8_t i=0; i < n_samples; i++)
 					{
-						if((vel_z_arr[i] > currentMaxVelocity) & (vel_z_arr[i] > thresh))
+						if(vel_z_arr[i] > thresh)
+						{
+							if((isPos == 0) & (currentMaxVelocity != 0))
 							{
-								if(isPos == 0)
-								{
-									maxVelocity[index] = currentMaxVelocity;
-									index++;
-									isPos=1;
-								}
+								maxVelocity[index] = currentMaxVelocity;
+								index += 1;
+								isPos=1;
 								currentMaxVelocity = vel_z_arr[i];
-								
 							}
+							else if(isPos == 0)				// This prevents the initial currentMaxVelocity value of 0 being stored in the maxVelocity array
+							{
+								isPos=1;
+							}
+							if(vel_z_arr[i] > currentMaxVelocity)	
+							{
+								currentMaxVelocity = vel_z_arr[i];
+							}
+						}
 							
 						else if(vel_z_arr[i] < 0)
+						{
+							if(isPos == 1)					// Not sure if I need the if statement, may not be more efficient
 							{
-								if(isPos == 1)
-								{
-									isPos=0;
-								}
+								isPos=0;
 							}
+						}
+					}
+					
 
+					for(uint16_t i=0;i<n_samples;i++)
+					{
+						warpPrint("\n%d,",acc_z_arr[i]);
+						warpPrint("\n     %d,",(int)(1000*acc_smoothed[i]));
+						warpPrint("\n            %d,",(int)(1000*vel_z_arr[i]));
 					}
 						
 					/*if(user input)
 					{
 						break;
 					}*/
-				
-				}
-				
-				for(uint16_t i=0;i<n_samples;i++)
-				{
-					warpPrint("\n%d,",acc_z_arr[i]);
 				}
 				
 
+				
+				warpPrint("dt = %d",(int)(1000*dt));
+				
+				warpPrint("\nMax Velocities:");
+				
+				for(int8_t i=0;i<index;i++)
+				{
+					warpPrint("\n%d,",(int)(1000*maxVelocity[i]));
+				}
+				warpPrint("\n Current Max Velocity: %d", currentMaxVelocity);
+
 				/* Display graph or numbers on OLED */
 				
-				//double velocity[] = {95.6,104.3,96,72,43.8,34.23};
+				//float velocity[] = {95.6,104.3,96,72,43.8,34.23};
 				
 				drawGraph(maxVelocity,index);
 				
@@ -1278,117 +1240,6 @@ loopForSensor(	const char *  tagString,
 
 	return;
 }
-
-
-
-void
-repeatRegisterReadForDeviceAndAddress(WarpSensorDevice warpSensorDevice, uint8_t baseAddress, bool autoIncrement, int chunkReadsPerAddress, bool chatty, int spinDelay, int repetitionsPerAddress, uint16_t sssupplyMillivolts, uint16_t adaptiveSssupplyMaxMillivolts, uint8_t referenceByte)
-{
-	switch (warpSensorDevice)
-	{
-
-		case kWarpSensorMMA8451Q:
-		{
-			/*
-			 *	MMA8451Q: VDD 1.95--3.6
-			 */
-			#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-				loopForSensor(	"\r\nMMA8451Q:\n\r",		/*	tagString			*/
-						&readSensorRegisterMMA8451Q,	/*	readSensorRegisterFunction	*/
-						&deviceMMA8451QState,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0x31,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tMMA8451Q Read Aborted. Device Disabled :(");
-			#endif
-
-			break;
-		}
-		
-		case kWarpSensorINA219:
-		{
-			/*
-			 *	INA219: VDD 3.0--5.5
-			 */
-			#if (WARP_BUILD_ENABLE_DEVINA219)
-				loopForSensor(	"\r\nINA219:\n\r",		/*	tagString			*/
-						&readSensorRegisterINA219,	/*	readSensorRegisterFunction	*/
-						&deviceINA219State,		/*	i2cDeviceState			*/
-						NULL,				/*	spiDeviceState			*/
-						baseAddress,			/*	baseAddress			*/
-						0x00,				/*	minAddress			*/
-						0x05,				/*	maxAddress			*/
-						repetitionsPerAddress,		/*	repetitionsPerAddress		*/
-						chunkReadsPerAddress,		/*	chunkReadsPerAddress		*/
-						spinDelay,			/*	spinDelay			*/
-						autoIncrement,			/*	autoIncrement			*/
-						sssupplyMillivolts,		/*	sssupplyMillivolts		*/
-						referenceByte,			/*	referenceByte			*/
-						adaptiveSssupplyMaxMillivolts,	/*	adaptiveSssupplyMaxMillivolts	*/
-						chatty				/*	chatty				*/
-						);
-			#else
-				warpPrint("\r\n\tINA219 Read Aborted. Device Disabled :(");
-			#endif
-
-			break;
-		}
-
-		default:
-		{
-			warpPrint("\r\tInvalid warpSensorDevice [%d] passed to repeatRegisterReadForDeviceAndAddress.\n", warpSensorDevice);
-		}
-	}
-
-}
-
-
-
-int
-char2int(int character)
-{
-	if (character >= '0' && character <= '9')
-	{
-		return character - '0';
-	}
-
-	if (character >= 'a' && character <= 'f')
-	{
-		return character - 'a' + 10;
-	}
-
-	if (character >= 'A' && character <= 'F')
-	{
-		return character - 'A' + 10;
-	}
-
-	return 0;
-}
-
-
-
-uint8_t
-readHexByte(void)
-{
-	uint8_t		topNybble, bottomNybble;
-
-	topNybble = warpWaitKey();
-	bottomNybble = warpWaitKey();
-
-	return (char2int(topNybble) << 4) + char2int(bottomNybble);
-}
-
 
 
 int

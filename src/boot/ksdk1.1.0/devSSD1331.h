@@ -42,4 +42,4 @@ typedef enum
 } SSD1331Commands;
 
 int	devSSD1331init(void);
-int 	drawGraph(double velocity[], int num_points);
+int 	drawGraph(float velocity[], int num_points);
