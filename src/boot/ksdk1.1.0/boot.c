@@ -417,14 +417,14 @@ enableTPS62740(uint16_t voltageMillivolts)
 		 *	By default, assusme pins are currently disabled (e.g., by a recent lowPowerPinStates())
 		 *
 		 *	Setup:
-		 *		PTB5/kWarpPinTPS62740_REGCTRL for GPIO
-		 *		PTB6/kWarpPinTPS62740_VSEL4 for GPIO
+		 *		PTB6/kWarpPinTPS62740_REGCTRL for GPIO
+		 *		PTB5/kWarpPinTPS62740_VSEL4 for GPIO
 		 *		PTB7/kWarpPinTPS62740_VSEL3 for GPIO
 		 *		PTB10/kWarpPinTPS62740_VSEL2 for GPIO
 		 *		PTB11/kWarpPinTPS62740_VSEL1 for GPIO
 		 */
-		PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortMuxAsGpio);
-		//PORT_HAL_SetMuxMode(PORTB_BASE, 6, kPortMuxAsGpio);
+		PORT_HAL_SetMuxMode(PORTB_BASE, 6, kPortMuxAsGpio);
+		//PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortMuxAsGpio);
 		//PORT_HAL_SetMuxMode(PORTB_BASE, 7, kPortMuxAsGpio);
 		PORT_HAL_SetMuxMode(PORTB_BASE, 10, kPortMuxAsGpio);
 		PORT_HAL_SetMuxMode(PORTB_BASE, 11, kPortMuxAsGpio);
@@ -828,9 +828,12 @@ main(void)
 			/*	CW 5, so far	*/
 			case 'y':
 			{
+				/* Changing NMI pin GPIO, for user input */
+				PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortMuxAsGpio);	
+				
 				float 	dt = 0;   // May need to change this to vary with the gap between reads, could work out total time and divide by n_samples to get dt.
 				uint32_t	time_start, time_dif;
-				int16_t	n_samples = 15;	// 16 bits gives up to 65535
+				int16_t	n_samples = 15;	
 				int8_t		index = 0;
 
 				int16_t	g_acc = 0;
@@ -841,10 +844,12 @@ main(void)
 				float		last_vel = 0;
 				int8_t		stationary = 0;
 
-				float		maxVelocity[14] = {0};
+				float		maxVelocity[20] = {0};
 				float		currentMaxVelocity = 0;
-				float		thresh = 0.1;					// Need to decide what this should be
+				float		thresh = 0.06;					// Speed threshold in m/s, to ensure spurious values ae not recorded
 				bool		isPos = 0;
+				
+				uint32_t	pinOutput = 1;
 				
 				/* Offsets due to gravity, to be removed from later readings. */ 
 
@@ -942,10 +947,11 @@ main(void)
 						warpPrint("\n            %d,",(int)(1000*vel_z_arr[i]));
 					}
 						
-					/*if(user input)
+					pinOutput = GPIO_DRV_ReadPinInput(kWarpPinSW3_NMI);
+					if(pinOutput == 0)
 					{
 						break;
-					}*/
+					}
 				}
 				
 
@@ -960,10 +966,7 @@ main(void)
 				}
 				warpPrint("\n Current Max Velocity: %d", currentMaxVelocity);
 
-				/* Display graph or numbers on OLED */
-				
-				//float velocity[] = {95.6,104.3,96,72,43.8,34.23};
-				
+				/* Display graph on OLED */
 				drawGraph(maxVelocity,index);
 				
 				break;
