@@ -74,11 +74,6 @@
 	volatile WarpI2CDeviceState			deviceMMA8451QState;
 #endif
 
-#if (WARP_BUILD_ENABLE_DEVINA219)
-	#include "devINA219.h"
-	volatile WarpI2CDeviceState			deviceINA219State;
-#endif
-
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 	#include "devRV8803C7.h"
 	volatile WarpI2CDeviceState			deviceRV8803C7State;
@@ -753,10 +748,6 @@ main(void)
 //		initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 		initMMA8451Q(	0x1D	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 	#endif
-	
-	#if (WARP_BUILD_ENABLE_DEVINA219)
-		initINA219(	0x40	/* i2cAddress */,	/* &deviceINA219State,	*/	kWarpDefaultSupplyVoltageMillivoltsINA219	);
-	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
 		initRV8803C7(	0x32	/* i2cAddress */,					kWarpDefaultSupplyVoltageMillivoltsRV8803C7	);
@@ -1042,19 +1033,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 					0x01/* Normal read 8bit, 800Hz, normal, active mode */
 					);
 	#endif
-	
-	#if (WARP_BUILD_ENABLE_DEVINA219)
-	uint8_t	payloadConfigMSB, payloadConfigLSB, payloadCalibMSB, payloadCalibLSB;
-	payloadConfigMSB = 0x11;
-	payloadConfigLSB = 0x9F;
-	payloadCalibMSB = 0x10;
-	payloadCalibLSB = 0x00;
-	numberOfConfigErrors += configureSensorINA219(payloadConfigMSB,
-							payloadConfigLSB,
-							payloadCalibMSB,
-							payloadCalibLSB
-							);
-	#endif	
+
 
 	if (printHeadersAndCalibration)
 	{
@@ -1063,10 +1042,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 			warpPrint(" MMA8451 x, MMA8451 y, MMA8451 z,");
 		#endif
-		
-		#if (WARP_BUILD_ENABLE_DEVINA219)
-			warpPrint(" INA219 load current, INA219 Shunt Voltage, INA219 Bus Voltage");
-		#endif
+
 
 		warpPrint(" RTC->TSR, RTC->TPR, # Config Errors");
 		warpPrint("\n\n");
@@ -1082,11 +1058,6 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 			
 			
 		#endif
-
-		#if (WARP_BUILD_ENABLE_DEVINA219)
-			printSensorDataINA219(hexModeFlag);		// Prints the contents of the current register 0x04
-		#endif
-
 		
 		warpPrint(" %12d, %6d, %2u\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
 
