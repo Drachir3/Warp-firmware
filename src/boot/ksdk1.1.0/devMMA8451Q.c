@@ -123,14 +123,14 @@ initMMA8451Q(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 	deviceMMA8451QState.i2cAddress			= i2cAddress;
 	deviceMMA8451QState.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
-	writeSensorRegisterMMA8451Q(0x2A, 0x04);	// Put sensor in standby mode
+	writeSensorRegisterMMA8451Q(0x2A, 0x14);	// Put sensor in standby mode
 	writeSensorRegisterMMA8451Q(0x2F, 0x00);	// Calibrating x-offset
 	writeSensorRegisterMMA8451Q(0x30, 0x00);	// Calibrating y-offset
 	writeSensorRegisterMMA8451Q(0x31, 0x00);	// Calibrating z-offset
-	writeSensorRegisterMMA8451Q(0x0F, 0x30);	// Enabling low-pass filter (pulse processing), 16 Hz cut-off, not sure if this actually does anything, since HPF is off (in 0x0E)
+	writeSensorRegisterMMA8451Q(0x0F, 0x30);	// Enabling low-pass filter (pulse processing), 8 Hz cut-off, not sure if this actually does anything, since HPF is off (in 0x0E)
 	writeSensorRegisterMMA8451Q(0x09, 0x00);	// Payload: Disable FIFO
 	writeSensorRegisterMMA8451Q(0x0E, 0x01);	// 4 g full-scale range, no high-pass filtering
-	writeSensorRegisterMMA8451Q(0x2A, 0x05);	// Put sensor in active mode
+	writeSensorRegisterMMA8451Q(0x2A, 0x15);	// Put sensor in active mode
 	
 	return;
 }

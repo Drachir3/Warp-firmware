@@ -69,10 +69,10 @@
 #define							kWarpConstantStringErrorSanity		"\rSanity check failed!"
 
 
-#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-	#include "devMMA8451Q.h"
-	volatile WarpI2CDeviceState			deviceMMA8451QState;
-#endif
+
+#include "devMMA8451Q.h"
+volatile WarpI2CDeviceState			deviceMMA8451QState;
+
 
 #if (WARP_BUILD_ENABLE_DEVRV8803C7)
 	#include "devRV8803C7.h"
@@ -109,9 +109,6 @@ uint8_t							gWarpSpiCommonSinkBuffer[kWarpMemoryCommonSpiBufferBytes];
 
 static void						lowPowerPinStates(void);
 static void						enableTPS62740(uint16_t voltageMillivolts);
-static int						read4digits(void);
-static void						printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever);
-
 
 /*
  *	Derived from KSDK power_manager_demo.c BEGIN>>>
@@ -451,7 +448,7 @@ warpScaleSupplyVoltage(uint16_t voltageMillivolts)
 		}
 		else
 		{
-			warpPrint(RTT_CTRL_RESET RTT_CTRL_BG_BRIGHT_RED RTT_CTRL_TEXT_BRIGHT_WHITE kWarpConstantStringErrorInvalidVoltage RTT_CTRL_RESET "\n", voltageMillivolts);
+			//warpPrint(RTT_CTRL_RESET RTT_CTRL_BG_BRIGHT_RED RTT_CTRL_TEXT_BRIGHT_WHITE kWarpConstantStringErrorInvalidVoltage RTT_CTRL_RESET "\n", voltageMillivolts);
 		}
 	#endif
 }
@@ -544,7 +541,6 @@ int
 main(void)
 {
 	WarpStatus				status;
-	uint8_t				key;
 	rtc_datetime_t				warpBootDate;
 	power_manager_user_config_t		warpPowerModeWaitConfig;
 	power_manager_user_config_t		warpPowerModeStopConfig;
@@ -730,21 +726,21 @@ main(void)
 	 *	Initialize all the sensors
 	 */
 
-	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-//		initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
-		initMMA8451Q(	0x1D	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
-	#endif
+
+	//initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+	initMMA8451Q(	0x1D	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+
 
 	#if (WARP_BUILD_ENABLE_DEVRV8803C7)
 		initRV8803C7(	0x32	/* i2cAddress */,					kWarpDefaultSupplyVoltageMillivoltsRV8803C7	);
 		status = setRTCCountdownRV8803C7(0 /* countdown */, kWarpRV8803ExtTD_1HZ /* frequency */, false /* interupt_enable */);
 		if (status != kWarpStatusOK)
 		{
-			warpPrint("setRTCCountdownRV8803C7() failed...\n");
+			//warpPrint("setRTCCountdownRV8803C7() failed...\n");
 		}
 		else
 		{
-			warpPrint("setRTCCountdownRV8803C7() succeeded.\n");
+			//warpPrint("setRTCCountdownRV8803C7() succeeded.\n");
 		}
 
 		/*
@@ -755,11 +751,11 @@ main(void)
 		status = readRTCRegisterRV8803C7(kWarpRV8803RegExt, &extReg);
 		if (status != kWarpStatusOK)
 		{
-			warpPrint("readRTCRegisterRV8803C7() failed...\n");
+			//warpPrint("readRTCRegisterRV8803C7() failed...\n");
 		}
 		else
 		{
-			warpPrint("readRTCRegisterRV8803C7() succeeded.\n");
+			//warpPrint("readRTCRegisterRV8803C7() succeeded.\n");
 		}
 
 		/*
@@ -770,11 +766,11 @@ main(void)
 		status = writeRTCRegisterRV8803C7(kWarpRV8803RegExt, extReg);
 		if (status != kWarpStatusOK)
 		{
-			warpPrint("writeRTCRegisterRV8803C7() failed...\n");
+			//warpPrint("writeRTCRegisterRV8803C7() failed...\n");
 		}
 		else
 		{
-			warpPrint("writeRTCRegisterRV8803C7() succeeded.\n");
+			//warpPrint("writeRTCRegisterRV8803C7() succeeded.\n");
 		}
 	#endif
 
@@ -784,7 +780,6 @@ main(void)
 	 *	will also be sent to the BLE if that is compiled in.
 	 */
 	gWarpBooted = true;
-	warpPrint("Boot done.\n");
 
 
 	devSSD1331init();
@@ -792,417 +787,153 @@ main(void)
 
 	while (1)
 	{
-		/*
-		 *	Do not, e.g., lowPowerPinStates() on each iteration, because we actually
-		 *	want to use menu to progressiveley change the machine state with various
-		 *	commands.
-		 */
 
-		warpPrint("\rSelect:\n");
 
-		warpPrint("\r- 'y': my functionality.\n");
-		warpPrint("\r- 'z': perpetually dump all sensor data.\n");
 
-		warpPrint("\rEnter selection> ");
-		key = warpWaitKey();
+	/*	CW 5, so far	*/
+	
+		/* Changing NMI pin GPIO, for user input */
+		PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortMuxAsGpio);	
+		
+		float 		dt = 0;			// This is updated to an accurate value later.  
+		uint32_t	time_start, time_dif;
+		int16_t	n_samples = 15;	
+		int8_t		index = 0;
 
-		switch (key)
+		int16_t	g_acc = 0;
+
+		int16_t	acc_z_arr[15] = {0};
+		float		acc_smoothed[15] = {0};
+		float		vel_z_arr[15] = {0};
+		float		last_vel = 0;
+		int8_t		stationary = 0;
+
+		float		maxVelocity[20] = {0};
+		float		currentMaxVelocity = 0;
+		float		thresh = 0.06;					// Speed threshold in m/s, to ensure spurious values ae not recorded
+		bool		isPos = 0;
+		
+		uint32_t	pinOutput = 1;
+		
+		
+		/* Offsets due to gravity, to be removed from later readings. */ 
+
+		for(int8_t i=0;i<10;i++)
 		{
+			g_acc += (int) (0.1*fetchSensorDataMMA8451Q());
+		} 
 
-
+		for(int16_t j=0;j<900;j++)
+		{	
+			time_start = OSA_TimeGetMsec();
 			
-			/*	CW 5, so far	*/
-			case 'y':
+			for(uint16_t i=0;i < n_samples;i++)
 			{
-				/* Changing NMI pin GPIO, for user input */
-				PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortMuxAsGpio);	
-				
-				float 	dt = 0;   // May need to change this to vary with the gap between reads, could work out total time and divide by n_samples to get dt.
-				uint32_t	time_start, time_dif;
-				int16_t	n_samples = 15;	
-				int8_t		index = 0;
+				acc_z_arr[i] = fetchSensorDataMMA8451Q() - g_acc;
+			}
+			time_dif = OSA_TimeGetMsec() - time_start;
+			dt = time_dif/n_samples;
+			
+			
+			/* Smooth acceleration data */
+			
+			for(int8_t i=1;i<n_samples-2;i++)
+			{
+				acc_smoothed[i] = 9.81*(acc_z_arr[i-1] + acc_z_arr[i] + acc_z_arr[i+1])/(3*2056);
+			}
+			acc_smoothed[0] = 9.81*(acc_z_arr[0] + acc_z_arr[1])/(2*2056);
+			acc_smoothed[n_samples-1] = 9.81*(acc_z_arr[n_samples-1] + acc_z_arr[n_samples-2])/(2*2056);
 
-				int16_t	g_acc = 0;
-
-				int16_t	acc_z_arr[15] = {0};
-				float		acc_smoothed[15] = {0};
-				float		vel_z_arr[15] = {0};
-				float		last_vel = 0;
-				int8_t		stationary = 0;
-
-				float		maxVelocity[20] = {0};
-				float		currentMaxVelocity = 0;
-				float		thresh = 0.06;					// Speed threshold in m/s, to ensure spurious values ae not recorded
-				bool		isPos = 0;
-				
-				uint32_t	pinOutput = 1;
-				
-				/* Offsets due to gravity, to be removed from later readings. */ 
-
-				for(int8_t i=0;i<10;i++)
+			vel_z_arr[0] = last_vel;
+			for(int8_t i=0;i< n_samples-1;i++)
+			{
+				vel_z_arr[i+1] = vel_z_arr[i] + acc_smoothed[i]*dt/1000;
+			}
+			
+			/* Identify when velocity should be 0, and reset */
+			
+			if( ((vel_z_arr[n_samples-1] - last_vel) < 1) & ((vel_z_arr[n_samples-1] - last_vel) > -1))		// Not using fabs, to avoid importing math
+			{
+				if(stationary > 2)				// Use 2 for limit if there are warpPrint statements, might need to reduce now that freuency is only 200 Hz
 				{
-					g_acc += (int) (0.1*fetchSensorDataMMA8451Q());
-				} 
+					last_vel = 0;
+					stationary = 0;
+				}
+				else
+				{
+					last_vel = vel_z_arr[n_samples-1];
+					stationary += 1;
+				}
+			}
+			else
+			{
+				last_vel = vel_z_arr[n_samples-1];
+				stationary = 0;
+			}
+			
+			
 
-				for(int16_t j=0;j<300;j++)
-				{	
-					time_start = OSA_TimeGetMsec();
-					
-					for(uint16_t i=0;i < n_samples;i++)
-					{
-						acc_z_arr[i] = fetchSensorDataMMA8451Q() - g_acc;
-					}
-					time_dif = OSA_TimeGetMsec() - time_start;
-					dt = time_dif/n_samples;
-					
-					
-					/* Smooth acceleration data */
-					
-					for(int8_t i=1;i<n_samples-2;i++)
-					{
-						acc_smoothed[i] = 9.81*(acc_z_arr[i-1] + acc_z_arr[i] + acc_z_arr[i+1])/(3*2056);
-					}
-					acc_smoothed[0] = 9.81*(acc_z_arr[0] + acc_z_arr[1])/(2*2056);
-					acc_smoothed[n_samples-1] = 9.81*(acc_z_arr[n_samples-1] + acc_z_arr[n_samples-2])/(2*2056);
-
-					vel_z_arr[0] = last_vel;
-					for(int8_t i=0;i< n_samples-1;i++)
-					{
-						vel_z_arr[i+1] = vel_z_arr[i] + acc_smoothed[i]*dt/1000;
-					}
-					
-					/* Identify when velocity should be 0, and reset */
-					
-					if( ((vel_z_arr[n_samples-1] - last_vel) < 1) & ((vel_z_arr[n_samples-1] - last_vel) > -1))		// Not using fabs, to avoid importing math
-					{
-						if(stationary > 2)				// May need to update this when warpPrint statements are removed, because these add in their own delays
-						{
-							last_vel = 0;
-							stationary = 0;
-						}
-						else
-						{
-							last_vel = vel_z_arr[n_samples-1];
-							stationary += 1;
-						}
-					}
-					else
-					{
-						last_vel = vel_z_arr[n_samples-1];
-						stationary = 0;
-					}
-					
-					
-
-					/* Process to identify max velocities */
-					for(int8_t i=0; i < n_samples; i++)
-					{
-						if(vel_z_arr[i] > thresh)
-						{
-							if((isPos == 0) & (currentMaxVelocity != 0))
-							{
-								maxVelocity[index] = currentMaxVelocity;
-								index += 1;
-								isPos=1;
-								currentMaxVelocity = vel_z_arr[i];
-							}
-							else if(isPos == 0)				// This prevents the initial currentMaxVelocity value of 0 being stored in the maxVelocity array
-							{
-								isPos=1;
-							}
-							if(vel_z_arr[i] > currentMaxVelocity)	
-							{
-								currentMaxVelocity = vel_z_arr[i];
-							}
-						}
-							
-						else if(vel_z_arr[i] < 0)
-						{
-							if(isPos == 1)					// Not sure if I need the if statement, may not be more efficient
-							{
-								isPos=0;
-							}
-						}
-					}
-					
-
-					for(uint16_t i=0;i<n_samples;i++)
-					{
-						warpPrint("\n%d,",acc_z_arr[i]);
-						warpPrint("\n     %d,",(int)(1000*acc_smoothed[i]));
-						warpPrint("\n            %d,",(int)(1000*vel_z_arr[i]));
-					}
-						
-					pinOutput = GPIO_DRV_ReadPinInput(kWarpPinSW3_NMI);
-					if(pinOutput == 0)
+			/* Process to identify max velocities */
+			for(int8_t i=0; i < n_samples; i++)
+			{
+				if(vel_z_arr[i] > thresh)
+				{
+					if((isPos == 0) & (currentMaxVelocity != 0))
 					{
 						maxVelocity[index] = currentMaxVelocity;
 						index += 1;
-						break;
+						isPos=1;
+						currentMaxVelocity = vel_z_arr[i];
+					}
+					else if(isPos == 0)				// This prevents the initial currentMaxVelocity value of 0 being stored in the maxVelocity array
+					{
+						isPos=1;
+					}
+					if(vel_z_arr[i] > currentMaxVelocity)	
+					{
+						currentMaxVelocity = vel_z_arr[i];
 					}
 				}
-				
-
-				/* Display graph on OLED */
-				drawGraph(maxVelocity,index);
-				
+					
+				else if(vel_z_arr[i] < 0)
+				{
+					if(isPos == 1)					// Not sure if I need the if statement, may not be more efficient
+					{
+						isPos=0;
+					}
+				}
+			}
+			
+			
+			/* for(uint16_t i=0;i<n_samples;i++)
+			{
+				warpPrint("\n%d,",acc_z_arr[i]);
+				warpPrint("\n     %d,",(int)(1000*acc_smoothed[i]));
+				warpPrint("\n            %d,",(int)(1000*vel_z_arr[i]));
+			}*/
+			
+			
+			pinOutput = GPIO_DRV_ReadPinInput(kWarpPinSW3_NMI);
+			if(pinOutput == 0)
+			{
+				maxVelocity[index] = currentMaxVelocity;
+				index += 1;
 				break;
 			}
+			
+		}
+		
 
-			/*
-			 *	Dump all the sensor data in one go
-			 */
-			case 'z':
-			{
-				bool		hexModeFlag;
-
-				warpPrint("\r\n\tHex or converted mode? ('h' or 'c')> ");
-				key = warpWaitKey();
-				hexModeFlag = (key == 'h' ? 1 : 0);
-
-				warpPrint("\r\n\tSet the time delay between each run in milliseconds (e.g., '1234')> ");
-				uint16_t	menuDelayBetweenEachRun = read4digits();
-				warpPrint("\r\n\tDelay between read batches set to %d milliseconds.\n\n", menuDelayBetweenEachRun);
-				
-				
-				printAllSensors(true /* printHeadersAndCalibration */, hexModeFlag, menuDelayBetweenEachRun, true /* loopForever */);
-
-				/*
-				 *	Not reached (printAllSensors() does not return)
-				 */
-				warpDisableI2Cpins();
-
-				break;
-			}
-
-
-			/*
-			 *	Ignore naked returns.
-			 */
-			case '\n':
-			{
-				warpPrint("\r\tPayloads make rockets more than just fireworks.");
-				break;
-			}
-
-			default:
-			{
-				warpPrint("\r\tInvalid selection '%c' !\n", key);
-			}
+		/* Display graph on OLED */
+		drawGraph(maxVelocity,index);
+		
+		
+		while(1)
+		{
 		}
 	}
 
 	return 0;
 }
 
-
-
-void
-printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelayBetweenEachRun, bool loopForever)
-{
-	/*
-	 *	A 32-bit counter gives us > 2 years of before it wraps, even if sampling at 60fps
-	 */
-	uint32_t	readingCount = 0;
-	uint32_t	numberOfConfigErrors = 0;
-
-
-	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-	numberOfConfigErrors += configureSensorMMA8451Q(0x00,/* Payload: Disable FIFO */
-					0x02 /* 8g full-scale range, no high-pass filtering */ ,
-					0x01/* Normal read 8bit, 800Hz, normal, active mode */
-					);
-	#endif
-
-
-	if (printHeadersAndCalibration)
-	{
-		warpPrint("Measurement number, RTC->TSR, RTC->TPR,\t\t");
-
-		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-			warpPrint(" MMA8451 x, MMA8451 y, MMA8451 z,");
-		#endif
-
-
-		warpPrint(" RTC->TSR, RTC->TPR, # Config Errors");
-		warpPrint("\n\n");
-	}
-
-	do
-	{
-		warpPrint("%12u, %12d, %6d,\t\t", readingCount, RTC->TSR, RTC->TPR);
-
-
-		#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
-			printSensorDataMMA8451Q(hexModeFlag);
-			
-			
-		#endif
-		
-		warpPrint(" %12d, %6d, %2u\n", RTC->TSR, RTC->TPR, numberOfConfigErrors);
-
-		if (menuDelayBetweenEachRun > 0)
-		{
-			OSA_TimeDelay(menuDelayBetweenEachRun);
-		}
-
-		readingCount++;
-
-	
-	} while (loopForever);
-}
-
-
-void
-loopForSensor(	const char *  tagString,
-		WarpStatus  (* readSensorRegisterFunction)(uint8_t deviceRegister, int numberOfBytes),
-		volatile WarpI2CDeviceState *  i2cDeviceState,
-		volatile WarpSPIDeviceState *  spiDeviceState,
-		uint8_t  baseAddress,
-		uint8_t  minAddress,
-		uint8_t  maxAddress,
-		int  repetitionsPerAddress,
-		int  chunkReadsPerAddress,
-		int  spinDelay,
-		bool  autoIncrement,
-		uint16_t  sssupplyMillivolts,
-		uint8_t  referenceByte,
-		uint16_t adaptiveSssupplyMaxMillivolts,
-		bool  chatty
-		)
-{
-	WarpStatus		status;
-	uint8_t			address = min(minAddress, baseAddress);
-	int			readCount = repetitionsPerAddress + 1;
-	int			nSuccesses = 0;
-	int			nFailures = 0;
-	int			nCorrects = 0;
-	int			nBadCommands = 0;
-	uint16_t		actualSssupplyMillivolts = sssupplyMillivolts;
-
-
-	if (	(!spiDeviceState && !i2cDeviceState) ||
-		(spiDeviceState && i2cDeviceState) )
-	{
-		warpPrint(RTT_CTRL_RESET RTT_CTRL_BG_BRIGHT_YELLOW RTT_CTRL_TEXT_BRIGHT_WHITE kWarpConstantStringErrorSanity RTT_CTRL_RESET "\n");
-	}
-
-	warpScaleSupplyVoltage(actualSssupplyMillivolts);
-	warpPrint(tagString);
-
-	/*
-	 *	Keep on repeating until we are above the maxAddress, or just once if not autoIncrement-ing
-	 *	This is checked for at the tail end of the loop.
-	 */
-	while (true)
-	{
-		for (int i = 0; i < readCount; i++) for (int j = 0; j < chunkReadsPerAddress; j++)
-		{
-			status = readSensorRegisterFunction(address+j, 1 /* numberOfBytes */);
-			if (status == kWarpStatusOK)
-			{
-				nSuccesses++;
-				if (actualSssupplyMillivolts > sssupplyMillivolts)
-				{
-					actualSssupplyMillivolts -= 100;
-					warpScaleSupplyVoltage(actualSssupplyMillivolts);
-				}
-
-				if (spiDeviceState)
-				{
-					if (referenceByte == spiDeviceState->spiSinkBuffer[2])
-					{
-						nCorrects++;
-					}
-
-					if (chatty)
-					{
-						warpPrint("\r\t0x%02x --> [0x%02x 0x%02x 0x%02x]\n",
-							address+j,
-							spiDeviceState->spiSinkBuffer[0],
-							spiDeviceState->spiSinkBuffer[1],
-							spiDeviceState->spiSinkBuffer[2]);
-					}
-				}
-				else
-				{
-					if (referenceByte == i2cDeviceState->i2cBuffer[0])
-					{
-						nCorrects++;
-					}
-
-					if (chatty)
-					{
-						warpPrint("\r\t0x%02x --> 0x%02x\n",
-							address+j,
-							i2cDeviceState->i2cBuffer[0]);
-					}
-				}
-			}
-			else if (status == kWarpStatusDeviceCommunicationFailed)
-			{
-				warpPrint("\r\t0x%02x --> ----\n",
-					address+j);
-
-				nFailures++;
-				if (actualSssupplyMillivolts < adaptiveSssupplyMaxMillivolts)
-				{
-					actualSssupplyMillivolts += 100;
-					warpScaleSupplyVoltage(actualSssupplyMillivolts);
-				}
-			}
-			else if (status == kWarpStatusBadDeviceCommand)
-			{
-				nBadCommands++;
-			}
-
-			if (spinDelay > 0)
-			{
-				OSA_TimeDelay(spinDelay);
-			}
-		}
-
-		if (autoIncrement)
-		{
-			address++;
-		}
-
-		if (address > maxAddress || !autoIncrement)
-		{
-			/*
-			 *	We either iterated over all possible addresses, or were asked to do only
-			 *	one address anyway (i.e. don't increment), so we're done.
-			 */
-			break;
-		}
-	}
-
-	/*
-	 *	We intersperse RTT_printfs with forced delays to allow us to use small
-	 *	print buffers even in RUN mode.
-	 */
-	warpPrint("\r\n\t%d/%d success rate.\n", nSuccesses, (nSuccesses + nFailures));
-	OSA_TimeDelay(50);
-	warpPrint("\r\t%d/%d successes matched ref. value of 0x%02x.\n", nCorrects, nSuccesses, referenceByte);
-	OSA_TimeDelay(50);
-	warpPrint("\r\t%d bad commands.\n\n", nBadCommands);
-	OSA_TimeDelay(50);
-
-
-	return;
-}
-
-
-int
-read4digits(void)
-{
-	uint8_t		digit1, digit2, digit3, digit4;
-
-	digit1 = warpWaitKey();
-	digit2 = warpWaitKey();
-	digit3 = warpWaitKey();
-	digit4 = warpWaitKey();
-
-	return (digit1 - '0')*1000 + (digit2 - '0')*100 + (digit3 - '0')*10 + (digit4 - '0');
-}
 
