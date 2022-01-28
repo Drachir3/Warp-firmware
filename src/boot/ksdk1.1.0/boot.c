@@ -453,7 +453,7 @@ warpScaleSupplyVoltage(uint16_t voltageMillivolts)
 	#endif
 }
 
-void
+/*void
 warpPrint(const char *fmt, ...)
 {
 	int	fmtlen;
@@ -470,13 +470,13 @@ warpPrint(const char *fmt, ...)
 	 *	2kB flash and removes the use of malloc so we can keep heap
 	 *	allocation to zero.
 	 */
-	#if (WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF)
+/*	#if (WARP_BUILD_ENABLE_SEGGER_RTT_PRINTF)
 		/*
 		 *	We can't use SEGGER_RTT_vprintf to format into a buffer
 		 *	since SEGGER_RTT_vprintf formats directly into the special
 		 *	RTT memory region to be picked up by the RTT / SWD mechanism...
 		 */
-		va_start(arg, fmt);
+/*		va_start(arg, fmt);
 		fmtlen = SEGGER_RTT_vprintf(0, fmt, &arg, gWarpPrintBuffer, kWarpDefaultPrintBufferSizeBytes);
 		va_end(arg);
 
@@ -494,13 +494,13 @@ warpPrint(const char *fmt, ...)
 		 *	If we are not compiling in the SEGGER_RTT_printf,
 		 *	we just send the format string of warpPrint()
 		 */
-		SEGGER_RTT_WriteString(0, fmt);
+/*		SEGGER_RTT_WriteString(0, fmt);
 
 
 	#endif
 
 	return;
-}
+}*/
 
 int
 warpWaitKey(void)
@@ -782,20 +782,15 @@ main(void)
 	gWarpBooted = true;
 
 
-	devSSD1331init();
-
+	devSSD1331init();				// Initialise OLED, with green screen to show it is on and recording
 
 	while (1)
 	{
 
-
-
-	/*	CW 5, so far	*/
-	
 		/* Changing NMI pin GPIO, for user input */
 		PORT_HAL_SetMuxMode(PORTB_BASE, 5, kPortMuxAsGpio);	
 		
-		float 		dt = 0;			// This is updated to an accurate value later.  
+		float 		dt = 0;					// This is updated to an accurate value later.  
 		uint32_t	time_start, time_dif;
 		int16_t	n_samples = 15;	
 		int8_t		index = 0;
@@ -817,22 +812,23 @@ main(void)
 		
 		
 		/* Offsets due to gravity, to be removed from later readings. */ 
-
 		for(int8_t i=0;i<10;i++)
 		{
 			g_acc += (int) (0.1*fetchSensorDataMMA8451Q());
 		} 
 
-		for(int16_t j=0;j<900;j++)
+		/*
+			Main measurement loop. No plotting inside this.
+		*/
+		for(int16_t j=0;j<1350;j++)
 		{	
 			time_start = OSA_TimeGetMsec();
-			
 			for(uint16_t i=0;i < n_samples;i++)
 			{
 				acc_z_arr[i] = fetchSensorDataMMA8451Q() - g_acc;
 			}
 			time_dif = OSA_TimeGetMsec() - time_start;
-			dt = time_dif/n_samples;
+			dt = time_dif/n_samples;					// dt caulculated from timer to use in integration below
 			
 			
 			/* Smooth acceleration data */
@@ -844,7 +840,9 @@ main(void)
 			acc_smoothed[0] = 9.81*(acc_z_arr[0] + acc_z_arr[1])/(2*2056);
 			acc_smoothed[n_samples-1] = 9.81*(acc_z_arr[n_samples-1] + acc_z_arr[n_samples-2])/(2*2056);
 
-			vel_z_arr[0] = last_vel;
+			vel_z_arr[0] = last_vel;					// Move most recent velocity to the start of the array, for the integration
+			
+			/*	Calculate the velocity in the z direction	*/
 			for(int8_t i=0;i< n_samples-1;i++)
 			{
 				vel_z_arr[i+1] = vel_z_arr[i] + acc_smoothed[i]*dt/1000;
@@ -854,23 +852,22 @@ main(void)
 			
 			if( ((vel_z_arr[n_samples-1] - last_vel) < 1) & ((vel_z_arr[n_samples-1] - last_vel) > -1))		// Not using fabs, to avoid importing math
 			{
-				if(stationary > 2)				// Use 2 for limit if there are warpPrint statements, might need to reduce now that freuency is only 200 Hz
+				if(stationary > 2)					// Velocity has been stationary for too long, so velocity is set to 0						
 				{
 					last_vel = 0;
 					stationary = 0;
 				}
 				else
 				{
-					last_vel = vel_z_arr[n_samples-1];
+					last_vel = vel_z_arr[n_samples-1];		// Velocity has been stationary throughout a measuring cycle
 					stationary += 1;
 				}
 			}
 			else
 			{
-				last_vel = vel_z_arr[n_samples-1];
+				last_vel = vel_z_arr[n_samples-1];			// Store last velocity value, to use as the initial value next cycle.
 				stationary = 0;
 			}
-			
 			
 
 			/* Process to identify max velocities */
@@ -878,6 +875,7 @@ main(void)
 			{
 				if(vel_z_arr[i] > thresh)
 				{
+					/*	The previous max velocity is stored in the array, and the new max is tracked	*/
 					if((isPos == 0) & (currentMaxVelocity != 0))
 					{
 						maxVelocity[index] = currentMaxVelocity;
@@ -889,7 +887,7 @@ main(void)
 					{
 						isPos=1;
 					}
-					if(vel_z_arr[i] > currentMaxVelocity)	
+					if(vel_z_arr[i] > currentMaxVelocity)		
 					{
 						currentMaxVelocity = vel_z_arr[i];
 					}
@@ -897,22 +895,14 @@ main(void)
 					
 				else if(vel_z_arr[i] < 0)
 				{
-					if(isPos == 1)					// Not sure if I need the if statement, may not be more efficient
+					if(isPos == 1)	
 					{
 						isPos=0;
 					}
 				}
 			}
 			
-			
-			/* for(uint16_t i=0;i<n_samples;i++)
-			{
-				warpPrint("\n%d,",acc_z_arr[i]);
-				warpPrint("\n     %d,",(int)(1000*acc_smoothed[i]));
-				warpPrint("\n            %d,",(int)(1000*vel_z_arr[i]));
-			}*/
-			
-			
+			/*	CHeck if SW3 is pressed. If so, move to drawing the graph. Otherwise, continue with the loop	*/
 			pinOutput = GPIO_DRV_ReadPinInput(kWarpPinSW3_NMI);
 			if(pinOutput == 0)
 			{
@@ -928,7 +918,7 @@ main(void)
 		drawGraph(maxVelocity,index);
 		
 		
-		while(1)
+		while(1)		// Keep the graph displayed until the reset button is pushed.
 		{
 		}
 	}

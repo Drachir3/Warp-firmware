@@ -178,9 +178,11 @@ devSSD1331init(void)
 
 	return 0;
 }
-
+/*
+	This plots a graph of velocities, noralised to the greatest velocity.
+*/
 int
-drawGraph(float velocity[], int num_points)		// Will likely need to pass in velocity data here as an argument. Remember to update .h too.
+drawGraph(float velocity[], int num_points)		
 {
 
 	/*	Clear Screen	*/
@@ -209,18 +211,18 @@ drawGraph(float velocity[], int num_points)		// Will likely need to pass in velo
 	writeCommand(0xFF);					// Blue
 
 		
-	int hor_scale_factor = 95/(num_points-1);	
+	int hor_scale_factor = 95/(num_points-1);		// 	Scaling to use entire screen width for plot
 	float max_value = 0;
-	for(int i=0;i<num_points;i++)
+	for(int i=0;i<num_points;i++)				//	Identifies maximum velocity in array
 	{
 		if(velocity[i]>max_value)
 		{
 			max_value = velocity[i];
 		}
 	}
+	float vert_sf = 63/max_value;				// 	Scaling to use entire screen height for plot
 	
-	float vert_sf = 63/max_value;
-	
+	/*	Plotting the velocities	*/
 	for(int i=0;i<num_points;i++)
 	{
 		writeCommand(kSSD1331CommandDRAWLINE);
