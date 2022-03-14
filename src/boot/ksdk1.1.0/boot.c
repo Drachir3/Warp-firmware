@@ -2670,7 +2670,7 @@ printAllSensors(bool printHeadersAndCalibration, bool hexModeFlag, int menuDelay
 	#endif
 	#if (WARP_BUILD_ENABLE_DEVINA219)
 	uint8_t	payloadConfigMSB, payloadConfigLSB, payloadCalibMSB, payloadCalibLSB;
-	payloadConfigMSB = 0x11;
+	payloadConfigMSB = 0x19;
 	payloadConfigLSB = 0x9F;
 	payloadCalibMSB = 0x10;
 	payloadCalibLSB = 0x00;
